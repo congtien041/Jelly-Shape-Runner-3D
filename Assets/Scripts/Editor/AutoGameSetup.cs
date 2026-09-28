@@ -55,9 +55,11 @@ public static class AutoGameSetup
         SetupMainMenuScene();
         SetupGameScene(matJelly, matTrack, matRail, wallPrefab);
 
-        // Sinh trực tiếp toàn bộ cây UI thật 100% vào Scene để chỉnh sửa trực quan trong Editor
-        SceneUIHierarchyGenerator.GenerateMainMenuSceneUI();
-        SceneUIHierarchyGenerator.GenerateGameSceneUI();
+        // Áp dụng 100% Giao diện Layer Lab GUI Pro cao cấp vào cả 2 Scene và xuất Prefab
+        LayerLabAutoSetup.SetupAll();
+
+        // Tối ưu hóa toàn diện Model Cute Magic (Fox & T-Rex): Scale x2, URP Lit, Animation chạy, offset bám sàn
+        CubeAnimalsOptimizer.OptimizeAllCharacters();
 
         // Tự động thêm và cấu hình Global Volume phát sáng Neon rực rỡ vào cả 2 Scene
         GlobalVolumeSetupTool.SetupGlobalVolumeAllScenes();
@@ -245,8 +247,15 @@ public static class AutoGameSetup
         player.transform.position = new Vector3(0f, 0.5f, 0f);
         player.transform.localScale = Vector3.one;
         player.GetComponent<MeshRenderer>().sharedMaterial = matJelly;
-        player.AddComponent<JellyPlayer>();
+        JellyPlayer jp = player.AddComponent<JellyPlayer>();
         player.AddComponent<PlayerCollision>();
+
+        GameObject foxPf = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_Fox.prefab");
+        GameObject trexPf = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_TRex.prefab");
+        SerializedObject jpSo = new SerializedObject(jp);
+        if (foxPf != null) jpSo.FindProperty("foxModelPrefab").objectReferenceValue = foxPf;
+        if (trexPf != null) jpSo.FindProperty("trexModelPrefab").objectReferenceValue = trexPf;
+        jpSo.ApplyModifiedProperties();
 
         // 3. Camera
         GameObject camObj = new GameObject("Main Camera");

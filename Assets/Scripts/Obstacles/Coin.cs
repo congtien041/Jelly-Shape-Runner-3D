@@ -84,12 +84,31 @@ public class Coin : MonoBehaviour
         }
     }
 
+    private static Material s_coinParticleMaterial;
+    private static Material GetCoinParticleMaterial()
+    {
+        if (s_coinParticleMaterial == null)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                         ?? Shader.Find("Universal Render Pipeline/Unlit")
+                         ?? Shader.Find("Sprites/Default");
+            s_coinParticleMaterial = new Material(shader) { name = "URP_Coin_Particle_Material" };
+        }
+        return s_coinParticleMaterial;
+    }
+
     private void CreateDefaultCollectEffect()
     {
         GameObject vfxObj = new GameObject("Coin_Collect_VFX");
         vfxObj.transform.position = transform.position;
 
         ParticleSystem ps = vfxObj.AddComponent<ParticleSystem>();
+        ParticleSystemRenderer psRenderer = vfxObj.GetComponent<ParticleSystemRenderer>();
+        if (psRenderer != null)
+        {
+            psRenderer.material = GetCoinParticleMaterial();
+        }
+
         var main = ps.main;
         main.startLifetime = 0.6f;
         main.startSpeed = 4f;

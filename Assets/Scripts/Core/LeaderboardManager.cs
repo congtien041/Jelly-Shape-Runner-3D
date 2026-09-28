@@ -5,7 +5,8 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Quản lý bảng xếp hạng Top 5 điểm cao nhất.
-/// Lưu trữ bằng PlayerPrefs + JSON. Singleton pattern.
+/// Lưu trữ bền vững bằng PlayerPrefs + JSON.
+/// Lưu cả Tên Người Chơi, Avatar và Điểm Số.
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Jelly Runner/Leaderboard Manager")]
@@ -16,21 +17,26 @@ public class LeaderboardManager : MonoBehaviour
     [Header("--- UI Hiển Thị ---")]
     [SerializeField] private TextMeshProUGUI leaderboardText;
 
-    private const string LEADERBOARD_KEY = "Leaderboard";
+    private const string LEADERBOARD_KEY = "Leaderboard_v2";
     private const int MAX_ENTRIES = 5;
 
     private LeaderboardData data;
+
+    // Danh sách icon avatar đại diện
+    private static readonly string[] AvatarIcons = new string[] { "💎", "👑", "🔮", "🔥", "🍀", "⚡" };
 
     [Serializable]
     public class LeaderboardEntry
     {
         public string playerName;
         public int score;
+        public int avatarIndex;
 
-        public LeaderboardEntry(string name, int score)
+        public LeaderboardEntry(string name, int score, int avatarIndex = 0)
         {
             this.playerName = name;
             this.score = score;
+            this.avatarIndex = avatarIndex;
         }
     }
 
@@ -54,15 +60,17 @@ public class LeaderboardManager : MonoBehaviour
 
     /// <summary>
     /// Kiểm tra và thêm điểm vào bảng xếp hạng nếu đủ điều kiện Top 5.
+    /// Lưu kèm Avatar và Tên của người chơi.
     /// </summary>
     public void AddScore(int score)
     {
-        string playerName = PlayerPrefs.GetString("PlayerName", "Player");
+        string playerName = PlayerPrefs.GetString("PlayerName", "Jelly Runner");
+        int avatarIndex = Mathf.Clamp(PlayerPrefs.GetInt("PlayerAvatarIndex", 0), 0, AvatarIcons.Length - 1);
 
         // Kiểm tra có đủ điều kiện Top 5 không
         if (data.entries.Count < MAX_ENTRIES || score > data.entries[data.entries.Count - 1].score)
         {
-            data.entries.Add(new LeaderboardEntry(playerName, score));
+            data.entries.Add(new LeaderboardEntry(playerName, score, avatarIndex));
 
             // Sắp xếp giảm dần theo điểm
             data.entries.Sort((a, b) => b.score.CompareTo(a.score));
@@ -72,6 +80,7 @@ public class LeaderboardManager : MonoBehaviour
                 data.entries.RemoveRange(MAX_ENTRIES, data.entries.Count - MAX_ENTRIES);
 
             SaveLeaderboard();
+            Debug.Log($"<color=#00FF66>[LeaderboardManager] Đã ghi danh kỷ lục mới: {playerName} ({score} điểm) vào Top 5!</color>");
         }
     }
 
@@ -91,10 +100,13 @@ public class LeaderboardManager : MonoBehaviour
     {
         if (leaderboardText == null) return;
 
-        string display = "🏆 BẢNG XẾP HẠNG 🏆\n\n";
+        bool isVn = LocalizationManager.Instance == null || LocalizationManager.Instance.CurrentLanguage == LocalizationManager.Language.Vietnamese;
+        string header = isVn ? "🏆 BẢNG XẾP HẠNG TOP 5 🏆\n\n" : "🏆 TOP 5 LEADERBOARD 🏆\n\n";
+        string display = header;
 
         for (int i = 0; i < data.entries.Count; i++)
         {
+            var entry = data.entries[i];
             string medal = i switch
             {
                 0 => "🥇",
@@ -103,12 +115,17 @@ public class LeaderboardManager : MonoBehaviour
                 _ => $" {i + 1}."
             };
 
-            display += $"{medal} {data.entries[i].playerName} — {data.entries[i].score}\n";
+            int avIdx = Mathf.Clamp(entry.avatarIndex, 0, AvatarIcons.Length - 1);
+            string avIcon = AvatarIcons[avIdx];
+            string scoreUnit = isVn ? "điểm" : "pts";
+
+            display += $"{medal} {avIcon} {entry.playerName}  —  <color=#FFDE43><b>{entry.score}</b></color> {scoreUnit}\n\n";
         }
 
-        // Nếu chưa có ai
         if (data.entries.Count == 0)
-            display += "Chưa có kỷ lục nào!\n";
+        {
+            display += isVn ? "Chưa có kỷ lục nào!\nHãy chơi để ghi danh!" : "No records yet!\nPlay now to make history!";
+        }
 
         leaderboardText.text = display;
     }
@@ -126,20 +143,26 @@ public class LeaderboardManager : MonoBehaviour
         leaderboardText = original;
     }
 
-    /// <summary>
-    /// Lấy danh sách entries (read-only).
-    /// </summary>
     public List<LeaderboardEntry> GetEntries()
     {
         return new List<LeaderboardEntry>(data.entries);
     }
 
     /// <summary>
-    /// Xóa toàn bộ bảng xếp hạng.
+    /// Xóa toàn bộ kỷ lục và đưa về trạng thái mặc định ban đầu
     /// </summary>
     public void ClearLeaderboard()
     {
+        ResetToDefault();
+    }
+
+    /// <summary>
+    /// Xóa và tái lập bảng xếp hạng mẫu ban đầu
+    /// </summary>
+    public void ResetToDefault()
+    {
         data.entries.Clear();
+        InitializeDefaultEntries();
         SaveLeaderboard();
     }
 
@@ -151,8 +174,24 @@ public class LeaderboardManager : MonoBehaviour
             data = JsonUtility.FromJson<LeaderboardData>(json);
         }
 
-        if (data == null)
+        if (data == null || data.entries == null || data.entries.Count == 0)
+        {
             data = new LeaderboardData();
+            InitializeDefaultEntries();
+            SaveLeaderboard();
+        }
+    }
+
+    /// <summary>
+    /// Khởi tạo sẵn các kỷ lục mẫu ban đầu để bảng xếp hạng luôn sinh động và có mục tiêu thi đấu
+    /// </summary>
+    private void InitializeDefaultEntries()
+    {
+        data.entries.Add(new LeaderboardEntry("Hoàng Gia", 1500, 1)); // 👑
+        data.entries.Add(new LeaderboardEntry("Kim Cương", 1200, 0)); // 💎
+        data.entries.Add(new LeaderboardEntry("Bão Lửa", 950, 3));   // 🔥
+        data.entries.Add(new LeaderboardEntry("Ngân Hà", 700, 2));   // 🔮
+        data.entries.Add(new LeaderboardEntry("Tia Chớp", 500, 5));  // ⚡
     }
 
     private void SaveLeaderboard()

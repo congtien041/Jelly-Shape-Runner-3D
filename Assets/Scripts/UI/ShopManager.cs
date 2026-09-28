@@ -37,6 +37,7 @@ public class ShopManager : MonoBehaviour
         public Color previewColor = Color.cyan;
         public Material materialAsset;
         public GameObject effectPrefab;
+        public JellyPlayer.CharacterType characterType = JellyPlayer.CharacterType.ClassicJelly;
         public bool isUnlocked;
     }
 
@@ -81,13 +82,15 @@ public class ShopManager : MonoBehaviour
         wallSkins.Clear();
         effectSkills.Clear();
 
-        // 1. PLAYER SKINS
-        playerSkins.Add(new ShopItemData { id = "p_cyan", displayName = "Neon Cyan", type = ItemType.PlayerSkin, price = 0, assetName = "Mat_Player_CyberCyan", previewColor = new Color(0f, 0.9f, 1f), isUnlocked = true });
-        playerSkins.Add(new ShopItemData { id = "p_gold", displayName = "Gold Royale", type = ItemType.PlayerSkin, price = 150, assetName = "Mat_Player_GoldRoyale", previewColor = new Color(1f, 0.85f, 0.15f) });
-        playerSkins.Add(new ShopItemData { id = "p_galaxy", displayName = "Galaxy Violet", type = ItemType.PlayerSkin, price = 250, assetName = "Mat_Player_GalaxyPurple", previewColor = new Color(0.65f, 0.15f, 1f) });
-        playerSkins.Add(new ShopItemData { id = "p_magma", displayName = "Magma Fire", type = ItemType.PlayerSkin, price = 350, assetName = "Mat_Player_MagmaLava", previewColor = new Color(1f, 0.3f, 0.05f) });
-        playerSkins.Add(new ShopItemData { id = "p_emerald", displayName = "Emerald Jade", type = ItemType.PlayerSkin, price = 500, assetName = "Mat_Player_EmeraldJade", previewColor = new Color(0.05f, 0.95f, 0.45f) });
-        playerSkins.Add(new ShopItemData { id = "p_void", displayName = "Void Shadow", type = ItemType.PlayerSkin, price = 750, assetName = "Mat_Player_VoidShadow", previewColor = new Color(0.2f, 0.15f, 0.35f) });
+        // 1. PLAYER SKINS & CHARACTERS (Có sẵn Nhân Vật 3D Fox & T-Rex)
+        playerSkins.Add(new ShopItemData { id = "p_cyan", displayName = "Neon Cyan (Cube)", type = ItemType.PlayerSkin, price = 0, assetName = "Mat_Player_CyberCyan", previewColor = new Color(0f, 0.9f, 1f), isUnlocked = true, characterType = JellyPlayer.CharacterType.ClassicJelly });
+        playerSkins.Add(new ShopItemData { id = "p_fox", displayName = "🦊 Cáo Voxel Cute", type = ItemType.PlayerSkin, price = 100, assetName = "", previewColor = new Color(1f, 0.55f, 0.1f), isUnlocked = true, characterType = JellyPlayer.CharacterType.Fox });
+        playerSkins.Add(new ShopItemData { id = "p_trex", displayName = "🦖 Khủng Long T-Rex", type = ItemType.PlayerSkin, price = 200, assetName = "", previewColor = new Color(0.2f, 0.8f, 0.3f), characterType = JellyPlayer.CharacterType.TRex });
+        playerSkins.Add(new ShopItemData { id = "p_gold", displayName = "Gold Royale", type = ItemType.PlayerSkin, price = 150, assetName = "Mat_Player_GoldRoyale", previewColor = new Color(1f, 0.85f, 0.15f), characterType = JellyPlayer.CharacterType.ClassicJelly });
+        playerSkins.Add(new ShopItemData { id = "p_galaxy", displayName = "Galaxy Violet", type = ItemType.PlayerSkin, price = 250, assetName = "Mat_Player_GalaxyPurple", previewColor = new Color(0.65f, 0.15f, 1f), characterType = JellyPlayer.CharacterType.ClassicJelly });
+        playerSkins.Add(new ShopItemData { id = "p_magma", displayName = "Magma Fire", type = ItemType.PlayerSkin, price = 350, assetName = "Mat_Player_MagmaLava", previewColor = new Color(1f, 0.3f, 0.05f), characterType = JellyPlayer.CharacterType.ClassicJelly });
+        playerSkins.Add(new ShopItemData { id = "p_emerald", displayName = "Emerald Jade", type = ItemType.PlayerSkin, price = 500, assetName = "Mat_Player_EmeraldJade", previewColor = new Color(0.05f, 0.95f, 0.45f), characterType = JellyPlayer.CharacterType.ClassicJelly });
+        playerSkins.Add(new ShopItemData { id = "p_void", displayName = "Void Shadow", type = ItemType.PlayerSkin, price = 750, assetName = "Mat_Player_VoidShadow", previewColor = new Color(0.2f, 0.15f, 0.35f), characterType = JellyPlayer.CharacterType.ClassicJelly });
 
         // 2. WALL SKINS
         wallSkins.Add(new ShopItemData { id = "w_crimson", displayName = "Classic Crimson", type = ItemType.WallSkin, price = 0, assetName = "Mat_Wall_Crimson", previewColor = new Color(1f, 0.32f, 0.35f), isUnlocked = true });
@@ -245,16 +248,35 @@ public class ShopManager : MonoBehaviour
             return true;
         }
 
-        // Kiểm tra tiền
-        if (CurrencyManager.Instance != null)
+        // Kiểm tra và trừ tiền (vàng)
+        if (item.price > 0)
         {
-            if (!CurrencyManager.Instance.SpendCoins(item.price))
-                return false;
+            if (CurrencyManager.Instance != null)
+            {
+                if (!CurrencyManager.Instance.SpendCoins(item.price))
+                {
+                    Debug.LogWarning($"[ShopManager] Không đủ vàng để mua {item.displayName}! Cần: {item.price}, Hiện có: {CurrencyManager.Instance.TotalCoins}");
+                    return false;
+                }
+            }
+            else
+            {
+                int currentCoins = PlayerPrefs.GetInt("TotalCoins", 0);
+                if (currentCoins < item.price)
+                {
+                    Debug.LogWarning($"[ShopManager] Không đủ vàng (PlayerPrefs) để mua {item.displayName}! Cần: {item.price}, Hiện có: {currentCoins}");
+                    return false;
+                }
+                currentCoins -= item.price;
+                PlayerPrefs.SetInt("TotalCoins", currentCoins);
+                PlayerPrefs.Save();
+            }
         }
 
         // Mở khóa & Trang bị
         item.isUnlocked = true;
         PlayerPrefs.SetInt(PREF_UNLOCKED_PREFIX + item.id, 1);
+        PlayerPrefs.Save();
         EquipItem(type, index);
 
         if (AudioManager.Instance != null)
@@ -321,8 +343,17 @@ public class ShopManager : MonoBehaviour
     {
         if (player == null) return;
 
-        Material playerMat = GetEquippedPlayerMaterial();
-        if (playerMat != null) player.ApplySkin(playerMat);
+        int playerIdx = GetEquippedIndex(ItemType.PlayerSkin);
+        if (playerIdx >= 0 && playerIdx < playerSkins.Count)
+        {
+            var item = playerSkins[playerIdx];
+            player.SetCharacter(item.characterType);
+
+            if (item.characterType == JellyPlayer.CharacterType.ClassicJelly && item.materialAsset != null)
+            {
+                player.ApplySkin(item.materialAsset);
+            }
+        }
 
         GameObject effectPrefab = GetEquippedEffectPrefab();
         player.ApplyEffect(effectPrefab);

@@ -23,6 +23,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip passWallSound;
     [SerializeField] private AudioClip coinCollectSound;
     [SerializeField] private AudioClip gameOverSound;
+    [SerializeField] private AudioClip buttonClickSound;
 
     [Header("--- Cài Đặt ---")]
     [Range(0f, 1f)]
@@ -111,6 +112,16 @@ public class AudioManager : MonoBehaviour
     public void PlayGameOverSound()
     {
         PlaySFX(gameOverSound);
+    }
+
+    public void PlayObstacleHitSound()
+    {
+        PlaySFX(gameOverSound);
+    }
+
+    public void PlayButtonClickSound()
+    {
+        PlaySFX(buttonClickSound);
     }
 
     /// <summary>

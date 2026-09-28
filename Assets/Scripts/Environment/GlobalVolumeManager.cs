@@ -108,23 +108,35 @@ public class GlobalVolumeManager : MonoBehaviour
         if (volume == null) volume = GetComponent<Volume>();
         if (volume == null) return;
 
-        VolumeProfile p = Application.isPlaying ? volume.profile : volume.sharedProfile;
-        if (p == null) return;
+        try
+        {
+            VolumeProfile p = volume.sharedProfile;
+            if (Application.isPlaying && volume.HasInstantiatedProfile())
+            {
+                p = volume.profile;
+            }
 
-        if (p.TryGet(out Bloom b))
-        {
-            b.intensity.Override(bloomIntensity);
+            if (p == null) return;
+
+            if (p.TryGet(out Bloom b) && b != null)
+            {
+                b.intensity.Override(bloomIntensity);
+            }
+            if (p.TryGet(out Vignette v) && v != null)
+            {
+                v.intensity.Override(vignetteIntensity);
+            }
+            if (p.TryGet(out ColorAdjustments c) && c != null)
+            {
+                c.saturation.Override(colorSaturation);
+                c.contrast.Override(colorContrast);
+            }
+            volume.weight = postProcessingEnabled ? 1f : 0f;
         }
-        if (p.TryGet(out Vignette v))
+        catch (System.Exception)
         {
-            v.intensity.Override(vignetteIntensity);
+            // Bỏ qua lỗi rác khi Unity Editor hủy/re-import asset hoặc profile trong Edit Mode
         }
-        if (p.TryGet(out ColorAdjustments c))
-        {
-            c.saturation.Override(colorSaturation);
-            c.contrast.Override(colorContrast);
-        }
-        volume.weight = postProcessingEnabled ? 1f : 0f;
     }
 #endif
 
@@ -136,54 +148,109 @@ public class GlobalVolumeManager : MonoBehaviour
         if (volume == null)
             volume = GetComponent<Volume>();
 
-        if (volume.profile == null)
+        if (volume == null) return;
+
+        VolumeProfile profile = null;
+        try
         {
-            volume.profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            volume.profile.name = "Dynamic_GlobalVolumeProfile";
+            if (volume.sharedProfile != null)
+            {
+                profile = volume.sharedProfile;
+            }
+            else
+            {
+                if (volume.profile == null)
+                {
+                    volume.profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                    volume.profile.name = "Dynamic_GlobalVolumeProfile";
+                }
+                profile = volume.profile;
+            }
+        }
+        catch (System.Exception)
+        {
+            profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            profile.name = "Dynamic_GlobalVolumeProfile";
+            volume.profile = profile;
         }
 
-        VolumeProfile profile = volume.profile;
+        if (profile == null) return;
 
         // 1. BLOOM (Phát sáng neon cực đẹp cho Jelly, Tường, Vệt sáng)
-        if (!profile.TryGet(out bloom))
+        try
         {
-            bloom = profile.Add<Bloom>(true);
+            if (!profile.TryGet(out bloom) || bloom == null)
+            {
+                bloom = profile.Add<Bloom>(true);
+            }
+            if (bloom != null)
+            {
+                bloom.threshold.Override(0.85f);
+                bloom.intensity.Override(bloomIntensity);
+                bloom.scatter.Override(0.7f);
+                bloom.highQualityFiltering.Override(true);
+            }
         }
-        bloom.threshold.Override(0.85f);
-        bloom.intensity.Override(bloomIntensity);
-        bloom.scatter.Override(0.7f);
-        bloom.highQualityFiltering.Override(true);
+        catch (System.Exception) { }
 
         // 2. COLOR ADJUSTMENTS (Tăng độ tương phản và bão hòa màu sắc tươi tắn)
-        if (!profile.TryGet(out colorAdjustments))
+        try
         {
-            colorAdjustments = profile.Add<ColorAdjustments>(true);
+            if (!profile.TryGet(out colorAdjustments) || colorAdjustments == null)
+            {
+                colorAdjustments = profile.Add<ColorAdjustments>(true);
+            }
+            if (colorAdjustments != null)
+            {
+                colorAdjustments.postExposure.Override(0.2f);
+                colorAdjustments.contrast.Override(colorContrast);
+                colorAdjustments.saturation.Override(colorSaturation);
+            }
         }
-        colorAdjustments.postExposure.Override(0.2f);
-        colorAdjustments.contrast.Override(colorContrast);
-        colorAdjustments.saturation.Override(colorSaturation);
+        catch (System.Exception) { }
 
         // 3. VIGNETTE (Bo viền tối điện ảnh tinh tế)
-        if (!profile.TryGet(out vignette))
+        try
         {
-            vignette = profile.Add<Vignette>(true);
+            if (!profile.TryGet(out vignette) || vignette == null)
+            {
+                vignette = profile.Add<Vignette>(true);
+            }
+            if (vignette != null)
+            {
+                vignette.intensity.Override(vignetteIntensity);
+                vignette.smoothness.Override(0.45f);
+            }
         }
-        vignette.intensity.Override(vignetteIntensity);
-        vignette.smoothness.Override(0.45f);
+        catch (System.Exception) { }
 
         // 4. CHROMATIC ABERRATION (Tán sắc ánh sáng nhẹ ở rìa màn hình)
-        if (!profile.TryGet(out chromaticAberration))
+        try
         {
-            chromaticAberration = profile.Add<ChromaticAberration>(true);
+            if (!profile.TryGet(out chromaticAberration) || chromaticAberration == null)
+            {
+                chromaticAberration = profile.Add<ChromaticAberration>(true);
+            }
+            if (chromaticAberration != null)
+            {
+                chromaticAberration.intensity.Override(0.12f);
+            }
         }
-        chromaticAberration.intensity.Override(0.12f);
+        catch (System.Exception) { }
 
         // 5. TONEMAPPING (Giúp ánh sáng không bị cháy trắng)
-        if (!profile.TryGet(out tonemapping))
+        try
         {
-            tonemapping = profile.Add<Tonemapping>(true);
+            if (!profile.TryGet(out tonemapping) || tonemapping == null)
+            {
+                tonemapping = profile.Add<Tonemapping>(true);
+            }
+            if (tonemapping != null)
+            {
+                tonemapping.mode.Override(TonemappingMode.Neutral);
+            }
         }
-        tonemapping.mode.Override(TonemappingMode.Neutral);
+        catch (System.Exception) { }
     }
 
     /// <summary>

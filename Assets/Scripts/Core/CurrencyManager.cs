@@ -76,6 +76,17 @@ public class CurrencyManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Đặt trực tiếp số coins (dành cho Tool chỉnh vàng hoặc debug).
+    /// </summary>
+    public void SetCoins(int amount)
+    {
+        totalCoins = Mathf.Max(0, amount);
+        SaveCoins();
+        UpdateUI();
+        OnCoinsChanged?.Invoke(totalCoins);
+    }
+
+    /// <summary>
     /// Gán UI text hiển thị coin (dùng khi UI được tạo runtime).
     /// </summary>
     public void SetCoinText(TextMeshProUGUI text)

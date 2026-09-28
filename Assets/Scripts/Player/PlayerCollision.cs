@@ -2,8 +2,10 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// Quản lý va chạm của Player: Obstacle -> Game Over (nếu sai hình), ScoreZone -> tăng điểm & tốc độ.
-/// Khi qua tường thành công: hiệu ứng confetti, âm thanh, + coin.
+/// Quản lý va chạm của Player:
+/// - Khi chui qua lỗ hổng (ScoreZone / PassTrigger): Đánh giá hình dạng, mở cổng an toàn, phát confetti, tăng điểm & coin.
+/// - Khi đâm vào tường đặc (Obstacle): Kích hoạt Game Over và hiệu ứng tan biến.
+/// - Khắc phục triệt để lỗi màu tím (Magenta) của hạt hiệu ứng trong URP.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(JellyPlayer))]
@@ -32,6 +34,9 @@ public class PlayerCollision : MonoBehaviour
     private MeshRenderer playerMeshRenderer;
     private bool isGameOver = false;
 
+    private static Material s_urpParticleMaterial;
+    private static Texture2D s_radialTexture;
+
     private void Awake()
     {
         jellyPlayer = GetComponent<JellyPlayer>();
@@ -42,27 +47,47 @@ public class PlayerCollision : MonoBehaviour
     {
         if (isGameOver) return;
 
-        if (other.CompareTag("Obstacle"))
+        // 1. Chạm vào Vùng Chui Qua Lỗ Hổng (PassTrigger / ScoreZone)
+        if (other.CompareTag("ScoreZone"))
         {
             Wall wall = other.GetComponentInParent<Wall>();
-            if (wall != null && wall.CheckPassSuccess(jellyPlayer.CurrentScaleY))
+            if (wall != null)
             {
-                // Hình dáng hợp lệ → qua tường thành công!
-                HandleWallPassSuccess();
+                if (wall.EvaluatePass(jellyPlayer.CurrentScaleY))
+                {
+                    HandleWallPassSuccess();
+                }
+                else
+                {
+                    HandleObstacleCollision();
+                }
                 return;
+            }
+            HandleScoreZonePassed(other);
+        }
+        // 2. Chạm vào Khối Tường Đặc (Obstacle)
+        else if (other.CompareTag("Obstacle"))
+        {
+            Wall wall = other.GetComponentInParent<Wall>();
+            if (wall != null)
+            {
+                // Nếu tường này đã đánh giá chui qua thành công thì bỏ qua va quẹt mép
+                if (wall.IsPassed) return;
+
+                if (wall.EvaluatePass(jellyPlayer.CurrentScaleY))
+                {
+                    HandleWallPassSuccess();
+                    return;
+                }
             }
 
             HandleObstacleCollision();
-        }
-        else if (other.CompareTag("ScoreZone"))
-        {
-            HandleScoreZonePassed(other);
         }
     }
 
     private void HandleWallPassSuccess()
     {
-        // Hiệu ứng confetti/sparkle
+        // Hiệu ứng confetti/sparkle lấp lánh rực rỡ
         PlaySuccessEffect();
 
         // Phát âm thanh qua tường
@@ -73,7 +98,19 @@ public class PlayerCollision : MonoBehaviour
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.AddCoins(coinsPerWall);
 
+        // Tăng điểm
+        if (GameManager.Instance != null)
+            GameManager.Instance.AddScore(pointsPerZone);
+
+        // Tăng tốc độ chạy nhẹ nhàng
+        if (jellyPlayer != null)
+        {
+            float newSpeed = Mathf.Min(jellyPlayer.ForwardSpeed + speedIncrement, maxForwardSpeed);
+            jellyPlayer.ForwardSpeed = newSpeed;
+        }
+
         OnWallPassedSuccess?.Invoke();
+        OnScoreZonePassed?.Invoke();
     }
 
     private void HandleObstacleCollision()
@@ -117,7 +154,62 @@ public class PlayerCollision : MonoBehaviour
         OnScoreZonePassed?.Invoke();
     }
 
-    // === Hiệu ứng thành công ===
+    // =========================================================================
+    // HỆ THỐNG HIỆU ỨNG PARTICLE CHUẨN URP (CHỐNG MÀU TÍM 100%)
+    // =========================================================================
+
+    private static Texture2D GetRadialTexture()
+    {
+        if (s_radialTexture == null)
+        {
+            int res = 64;
+            s_radialTexture = new Texture2D(res, res, TextureFormat.RGBA32, false);
+            s_radialTexture.wrapMode = TextureWrapMode.Clamp;
+            s_radialTexture.filterMode = FilterMode.Bilinear;
+
+            float center = (res - 1) * 0.5f;
+            float radius = center;
+
+            for (int y = 0; y < res; y++)
+            {
+                for (int x = 0; x < res; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                    float alpha = Mathf.Clamp01(1f - (dist / radius));
+                    alpha = Mathf.SmoothStep(0f, 1f, alpha);
+                    // Hạt phát sáng màu trắng để ParticleSystem tự do nhuộm màu rực rỡ
+                    s_radialTexture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+            s_radialTexture.Apply();
+        }
+        return s_radialTexture;
+    }
+
+    private static Material GetParticleMaterial()
+    {
+        if (s_urpParticleMaterial == null)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                         ?? Shader.Find("Universal Render Pipeline/Unlit")
+                         ?? Shader.Find("Sprites/Default");
+
+            s_urpParticleMaterial = new Material(shader) { name = "URP_Particle_Material_Runtime" };
+
+            Texture2D tex = GetRadialTexture();
+            if (s_urpParticleMaterial.HasProperty("_BaseMap"))
+                s_urpParticleMaterial.SetTexture("_BaseMap", tex);
+            if (s_urpParticleMaterial.HasProperty("_MainTex"))
+                s_urpParticleMaterial.SetTexture("_MainTex", tex);
+
+            if (s_urpParticleMaterial.HasProperty("_Surface"))
+                s_urpParticleMaterial.SetFloat("_Surface", 1); // Transparent
+            if (s_urpParticleMaterial.HasProperty("_Blend"))
+                s_urpParticleMaterial.SetFloat("_Blend", 0);   // Alpha
+            s_urpParticleMaterial.renderQueue = 3000;
+        }
+        return s_urpParticleMaterial;
+    }
 
     private void PlaySuccessEffect()
     {
@@ -134,30 +226,36 @@ public class PlayerCollision : MonoBehaviour
     private void CreateDefaultSuccessEffect()
     {
         GameObject vfxObj = new GameObject("Wall_Pass_Confetti");
-        vfxObj.transform.position = transform.position;
+        vfxObj.transform.position = transform.position + new Vector3(0f, 0.5f, 0f);
 
         ParticleSystem ps = vfxObj.AddComponent<ParticleSystem>();
+        ParticleSystemRenderer psRenderer = vfxObj.GetComponent<ParticleSystemRenderer>();
+        if (psRenderer != null)
+        {
+            psRenderer.material = GetParticleMaterial();
+        }
+
         var main = ps.main;
         main.startLifetime = 1.2f;
-        main.startSpeed = 6f;
-        main.startSize = 0.2f;
+        main.startSpeed = 7f;
+        main.startSize = 0.28f;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.stopAction = ParticleSystemStopAction.Destroy;
-        main.maxParticles = 30;
+        main.maxParticles = 40;
 
-        // Nhiều màu sắc (confetti)
+        // Màu sắc Confetti rực rỡ: Vàng kim tuyến và Xanh lá Neon
         main.startColor = new ParticleSystem.MinMaxGradient(
-            new Color(0f, 0.9f, 0.4f),   // Xanh lá
-            new Color(1f, 0.85f, 0f)      // Vàng
+            new Color(0.1f, 1.0f, 0.4f),   // Xanh lá neon
+            new Color(1.0f, 0.85f, 0.15f)  // Vàng kim tuyến
         );
 
         var emission = ps.emission;
-        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 30) });
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 40) });
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Cone;
-        shape.angle = 45f;
-        shape.radius = 0.3f;
+        shape.angle = 50f;
+        shape.radius = 0.4f;
 
         var sizeOverLifetime = ps.sizeOverLifetime;
         sizeOverLifetime.enabled = true;
@@ -165,8 +263,6 @@ public class PlayerCollision : MonoBehaviour
 
         ps.Play();
     }
-
-    // === Hiệu ứng chết ===
 
     private void PlayDeathEffect()
     {
@@ -183,21 +279,39 @@ public class PlayerCollision : MonoBehaviour
     private void CreateDefaultSplatterEffect()
     {
         GameObject vfxObj = new GameObject("Jelly_Death_Splatter");
-        vfxObj.transform.position = transform.position;
+        vfxObj.transform.position = transform.position + new Vector3(0f, 0.5f, 0f);
 
         ParticleSystem ps = vfxObj.AddComponent<ParticleSystem>();
+        ParticleSystemRenderer psRenderer = vfxObj.GetComponent<ParticleSystemRenderer>();
+        if (psRenderer != null)
+        {
+            psRenderer.material = GetParticleMaterial();
+        }
+
         var main = ps.main;
         main.startLifetime = 1.0f;
         main.startSpeed = 8f;
         main.startSize = 0.35f;
-        main.startColor = playerMeshRenderer != null ? playerMeshRenderer.sharedMaterial.color : new Color(0f, 0.85f, 1f);
+
+        // Lấy màu sắc tươi sáng của nhân vật hoặc màu cam rực rỡ
+        Color splatterColor = new Color(1.0f, 0.55f, 0.1f);
+        if (playerMeshRenderer != null && playerMeshRenderer.sharedMaterial != null)
+        {
+            splatterColor = playerMeshRenderer.sharedMaterial.color;
+        }
+        main.startColor = splatterColor;
         main.stopAction = ParticleSystemStopAction.Destroy;
 
         var emission = ps.emission;
-        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 40) });
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.0f, 45) });
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.5f;
+
+        var sizeOverLifetime = ps.sizeOverLifetime;
+        sizeOverLifetime.enabled = true;
+        sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0f));
 
         ps.Play();
     }

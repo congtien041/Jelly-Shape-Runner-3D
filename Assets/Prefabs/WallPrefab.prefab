@@ -211,7 +211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   requiredScaleY: 1
   requiredScaleX: 1
-  tolerance: 0.25
+  tolerance: 0.38
   topBlock: {fileID: 4509497372316947493}
   leftBlock: {fileID: 862641976468814556}
   rightBlock: {fileID: 3641845458143851356}

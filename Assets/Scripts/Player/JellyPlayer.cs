@@ -15,9 +15,9 @@ public class JellyPlayer : MonoBehaviour
 
     [Header("--- Giới Hạn Biến Dạng ---")]
     [Range(0.1f, 1.0f)]
-    [SerializeField] private float minY = 0.5f;
-    [Range(1.5f, 5.0f)]
-    [SerializeField] private float maxY = 3.0f;
+    [SerializeField] private float minY = 0.3f;
+    [Range(1.5f, 6.0f)]
+    [SerializeField] private float maxY = 5.0f;
 
     [Header("--- Bảo Toàn Thể Tích ---")]
     [SerializeField] private float baseVolume = 1.0f;
@@ -56,6 +56,23 @@ public class JellyPlayer : MonoBehaviour
     public float DistanceTraveled => distanceTraveled;
     #endregion
 
+    public enum CharacterType
+    {
+        ClassicJelly = 0,
+        Fox = 1,
+        TRex = 2
+    }
+
+    [Header("--- Nhân Vật 3D (Cube Animals) ---")]
+    [SerializeField] private GameObject foxModelPrefab;
+    [SerializeField] private GameObject trexModelPrefab;
+
+    private GameObject currentActiveModel;
+    private CharacterType currentCharacter = CharacterType.ClassicJelly;
+    private MeshRenderer defaultMeshRenderer;
+
+    public CharacterType CurrentCharacter => currentCharacter;
+
     private void Awake()
     {
         // ĐẢM BẢO CÓ RIGIDBODY KINEMATIC — bắt buộc để OnTriggerEnter hoạt động
@@ -64,6 +81,8 @@ public class JellyPlayer : MonoBehaviour
             rb = gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = true;
         rb.useGravity = false;
+
+        defaultMeshRenderer = GetComponent<MeshRenderer>();
 
         currentScaleY = Mathf.Clamp(transform.localScale.y, minY, maxY);
         targetScaleY = currentScaleY;
@@ -77,7 +96,86 @@ public class JellyPlayer : MonoBehaviour
             scaleZ = transform.localScale.z > 0 ? transform.localScale.z : 1.0f;
 
         ApplyTransform(currentScaleX, currentScaleY, false);
+
+        // Áp dụng nhân vật đã chọn
+        int savedChar = PlayerPrefs.GetInt("SelectedCharacter", 0);
+        SetCharacter((CharacterType)savedChar);
+
         LoadAndApplySavedSkinAndEffect();
+    }
+
+    /// <summary>
+    /// Chuyển đổi nhân vật: 0 = Classic Jelly, 1 = Fox, 2 = T-Rex
+    /// </summary>
+    public void SetCharacter(CharacterType type)
+    {
+        currentCharacter = type;
+        PlayerPrefs.SetInt("SelectedCharacter", (int)type);
+        PlayerPrefs.Save();
+        ApplyCharacterModel();
+    }
+
+    public void SetCharacter(int typeIndex)
+    {
+        SetCharacter((CharacterType)Mathf.Clamp(typeIndex, 0, 2));
+    }
+
+    public void ApplyCharacterModel()
+    {
+        if (defaultMeshRenderer == null)
+            defaultMeshRenderer = GetComponent<MeshRenderer>();
+
+        // Xóa model cũ nếu có
+        if (currentActiveModel != null)
+        {
+            Destroy(currentActiveModel);
+            currentActiveModel = null;
+        }
+
+        if (currentCharacter == CharacterType.ClassicJelly)
+        {
+            if (defaultMeshRenderer != null) defaultMeshRenderer.enabled = true;
+            return;
+        }
+
+        // Với Fox hoặc T-Rex: Ẩn khối cube mặc định, hiển thị model 3D
+        if (defaultMeshRenderer != null) defaultMeshRenderer.enabled = false;
+
+        GameObject prefabToSpawn = null;
+        if (currentCharacter == CharacterType.Fox)
+        {
+            prefabToSpawn = foxModelPrefab;
+            if (prefabToSpawn == null)
+                prefabToSpawn = Resources.Load<GameObject>("Characters/Model_Fox");
+#if UNITY_EDITOR
+            if (prefabToSpawn == null)
+                prefabToSpawn = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_Fox.prefab")
+                             ?? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/CuteMagic_CubeAnimals_Free/CubeAnimals_Free/Prefab_1/Fox.prefab");
+#endif
+        }
+        else if (currentCharacter == CharacterType.TRex)
+        {
+            prefabToSpawn = trexModelPrefab;
+            if (prefabToSpawn == null)
+                prefabToSpawn = Resources.Load<GameObject>("Characters/Model_TRex");
+#if UNITY_EDITOR
+            if (prefabToSpawn == null)
+                prefabToSpawn = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_TRex.prefab")
+                             ?? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/CuteMagic_CubeAnimals_T-REX_Free/CubeAnimals_T-REX_Free/Prefab/Animals/T_Rex.prefab");
+#endif
+        }
+
+        if (prefabToSpawn != null)
+        {
+            currentActiveModel = new GameObject("CharacterFormation_" + currentCharacter);
+            currentActiveModel.transform.SetParent(transform, false);
+            currentActiveModel.transform.localPosition = Vector3.zero;
+            currentActiveModel.transform.localRotation = Quaternion.identity;
+            currentActiveModel.transform.localScale = Vector3.one;
+
+            CubeAnimalFormation formation = currentActiveModel.AddComponent<CubeAnimalFormation>();
+            formation.Initialize(prefabToSpawn, this);
+        }
     }
 
     private GameObject activeEffectInstance;

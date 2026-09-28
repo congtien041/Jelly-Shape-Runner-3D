@@ -4,14 +4,24 @@ using TMPro;
 using System.Collections.Generic;
 
 /// <summary>
+/// ShopUI v2 — Tích hợp Layer Lab GUI Pro-CasualGame.
 /// Giao diện Cửa Hàng (Shop UI) hiện đại hỗ trợ Đa Ngôn Ngữ (Localization):
 /// 3 Tabs: Skin Nhân Vật, Skin Tường, Hiệu Ứng (Skills).
 /// Tự động cập nhật coin và ngôn ngữ thời gian thực.
+///
+/// KHÔNG CÒN TỰ SINH UI BẰNG CODE — dùng Prefab Layer Lab kéo thả.
+/// Hỗ trợ animation mở/đóng panel (UIAnimator).
+/// Hỗ trợ sử dụng Layer Lab CardFrame/ItemFrame prefab cho item card.
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Jelly Runner/Shop UI")]
 public class ShopUI : MonoBehaviour
 {
+    [Header("--- Layer Lab Item Card Prefab ---")]
+    [Tooltip("Kéo thả CardFrame05 hoặc ItemFrame02 từ Layer Lab vào đây. " +
+             "Nếu để trống, sẽ tự tạo card đơn giản.")]
+    [SerializeField] private GameObject itemCardPrefab;
+
     private GameObject shopPanel;
     private Transform contentContainer;
     private TextMeshProUGUI coinText;
@@ -28,17 +38,43 @@ public class ShopUI : MonoBehaviour
 
     private void Start()
     {
-        FindOrBuildShopUI();
+        FindShopUI();
 
         if (ShopManager.Instance != null)
             ShopManager.Instance.OnShopDataUpdated += RefreshShopItems;
 
         LocalizationManager.OnLanguageChanged += RefreshShopTexts;
+
+        // Tự động nạp danh sách vật phẩm ban đầu
+        RefreshShopItems();
     }
 
-    private void FindOrBuildShopUI()
+    /// <summary>
+    /// Tìm ShopModalPanel kể cả khi đang inactive.
+    /// GameObject.Find() KHÔNG tìm thấy inactive objects — đây là bug phổ biến.
+    /// Ta duyệt qua Canvas để tìm child theo tên.
+    /// </summary>
+    private void FindShopUI()
     {
+        // Bước 1: thử GameObject.Find (nhanh, cho trường hợp panel đang active)
         GameObject panelObj = GameObject.Find("ShopModalPanel");
+
+        // Bước 2: Nếu không tìm thấy (panel inactive), duyệt qua tất cả Canvas
+        if (panelObj == null)
+        {
+            Canvas[] allCanvases = Resources.FindObjectsOfTypeAll<Canvas>();
+            foreach (Canvas c in allCanvases)
+            {
+                if (c == null || c.gameObject.scene.name == null) continue; // skip prefab assets
+                Transform found = FindChildRecursive(c.transform, "ShopModalPanel");
+                if (found != null)
+                {
+                    panelObj = found.gameObject;
+                    break;
+                }
+            }
+        }
+
         if (panelObj != null)
         {
             shopPanel = panelObj;
@@ -80,11 +116,29 @@ public class ShopUI : MonoBehaviour
             }
 
             shopPanel.SetActive(false);
+
+            Debug.Log($"[ShopUI] Đã tìm thấy ShopModalPanel! ContentContainer: {(contentContainer != null ? "OK" : "NULL")}");
         }
         else
         {
-            BuildShopUI();
+            Debug.LogWarning("[ShopUI] Không tìm thấy 'ShopModalPanel' trên Scene! " +
+                "Hãy kéo thả Prefab Shop (Layer Lab) hoặc tự dựng ShopModalPanel theo hướng dẫn.");
         }
+    }
+
+    /// <summary>
+    /// Tìm child theo tên (đệ quy), hoạt động kể cả khi child đang inactive.
+    /// </summary>
+    private static Transform FindChildRecursive(Transform parent, string childName)
+    {
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            if (child.name == childName) return child;
+            Transform found = FindChildRecursive(child, childName);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private void OnDestroy()
@@ -97,153 +151,43 @@ public class ShopUI : MonoBehaviour
 
     public void ShowShop()
     {
+        if (shopPanel == null)
+            FindShopUI();
+
         if (shopPanel != null)
         {
             shopPanel.SetActive(true);
+
+            // ★ Animation Layer Lab: Trượt vào từ dưới
+            UIAnimator.SlideInFromBottom(shopPanel);
+
             UpdateCoinDisplay();
             RefreshShopTexts();
+            RefreshShopItems();
         }
     }
 
     public void HideShop()
     {
         if (shopPanel != null)
-            shopPanel.SetActive(false);
-    }
-
-    private void BuildShopUI()
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null)
-            canvas = FindAnyObjectByType<Canvas>();
-
-        if (canvas == null)
         {
-            GameObject canvasObj = new GameObject("ShopCanvas");
-            canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 200;
-            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1080, 1920);
-            scaler.matchWidthOrHeight = 0.5f;
-            canvasObj.AddComponent<GraphicRaycaster>();
+            // ★ Animation Layer Lab: Trượt xuống và ẩn
+            UIAnimator.SlideOutToBottom(shopPanel);
         }
-
-        // Panel nền
-        shopPanel = new GameObject("ShopModalPanel");
-        shopPanel.transform.SetParent(canvas.transform, false);
-        RectTransform rt = shopPanel.AddComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero;
-        rt.offsetMax = Vector2.zero;
-
-        Image bg = shopPanel.AddComponent<Image>();
-        bg.color = new Color(0.04f, 0.05f, 0.09f, 0.96f);
-
-        // Header Title
-        titleText = CreateText(shopPanel.transform, "Title", LocalizationManager.Get("shop_title"),
-            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-            new Vector2(0, -90), new Vector2(700, 80), 54, new Color(0f, 0.9f, 1f), TextAlignmentOptions.Center);
-
-        // Coin Display
-        coinText = CreateText(shopPanel.transform, "ShopCoins", "🪙 0",
-            new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-            new Vector2(-40, -90), new Vector2(300, 60), 38, new Color(1f, 0.85f, 0.1f), TextAlignmentOptions.Right);
-
-        // --- TAB BUTTONS ---
-        GameObject tabGroup = new GameObject("TabGroup");
-        tabGroup.transform.SetParent(shopPanel.transform, false);
-        RectTransform tabRt = tabGroup.AddComponent<RectTransform>();
-        tabRt.anchorMin = new Vector2(0.5f, 1f);
-        tabRt.anchorMax = new Vector2(0.5f, 1f);
-        tabRt.pivot = new Vector2(0.5f, 1f);
-        tabRt.anchoredPosition = new Vector2(0, -180);
-        tabRt.sizeDelta = new Vector2(980, 80);
-
-        tabPlayerBtn = CreateButton(tabGroup.transform, "Tab_Player", LocalizationManager.Get("shop_tab_player"),
-            new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-            new Vector2(0, 0), new Vector2(310, 75), 30, new Color(0f, 0.6f, 0.8f), out tabPlayerBtnText);
-        tabPlayerBtn.onClick.AddListener(() => SwitchTab(ShopManager.ItemType.PlayerSkin));
-
-        tabWallBtn = CreateButton(tabGroup.transform, "Tab_Wall", LocalizationManager.Get("shop_tab_wall"),
-            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(0, 0), new Vector2(310, 75), 30, new Color(0.2f, 0.25f, 0.35f), out tabWallBtnText);
-        tabWallBtn.onClick.AddListener(() => SwitchTab(ShopManager.ItemType.WallSkin));
-
-        tabEffectBtn = CreateButton(tabGroup.transform, "Tab_Effect", LocalizationManager.Get("shop_tab_effect"),
-            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-            new Vector2(0, 0), new Vector2(310, 75), 28, new Color(0.2f, 0.25f, 0.35f), out tabEffectBtnText);
-        tabEffectBtn.onClick.AddListener(() => SwitchTab(ShopManager.ItemType.Effect));
-
-        // --- SCROLL VIEW FOR ITEMS ---
-        GameObject scrollObj = new GameObject("ScrollView");
-        scrollObj.transform.SetParent(shopPanel.transform, false);
-        RectTransform scrollRt = scrollObj.AddComponent<RectTransform>();
-        scrollRt.anchorMin = new Vector2(0.5f, 0.5f);
-        scrollRt.anchorMax = new Vector2(0.5f, 0.5f);
-        scrollRt.pivot = new Vector2(0.5f, 0.5f);
-        scrollRt.anchoredPosition = new Vector2(0, -40);
-        scrollRt.sizeDelta = new Vector2(980, 1250);
-
-        ScrollRect scrollRect = scrollObj.AddComponent<ScrollRect>();
-        scrollRect.horizontal = false;
-        scrollRect.vertical = true;
-        scrollRect.movementType = ScrollRect.MovementType.Clamped;
-
-        GameObject viewport = new GameObject("Viewport");
-        viewport.transform.SetParent(scrollObj.transform, false);
-        RectTransform viewRt = viewport.AddComponent<RectTransform>();
-        viewRt.anchorMin = Vector2.zero;
-        viewRt.anchorMax = Vector2.one;
-        viewRt.offsetMin = Vector2.zero;
-        viewRt.offsetMax = Vector2.zero;
-        viewport.AddComponent<RectMask2D>();
-        scrollRect.viewport = viewRt;
-
-        GameObject content = new GameObject("Content");
-        content.transform.SetParent(viewport.transform, false);
-        RectTransform contentRt = content.AddComponent<RectTransform>();
-        contentRt.anchorMin = new Vector2(0, 1);
-        contentRt.anchorMax = new Vector2(1, 1);
-        contentRt.pivot = new Vector2(0.5f, 1);
-        contentRt.anchoredPosition = Vector2.zero;
-        contentRt.sizeDelta = new Vector2(0, 1000);
-
-        VerticalLayoutGroup vLayout = content.AddComponent<VerticalLayoutGroup>();
-        vLayout.spacing = 25;
-        vLayout.padding = new RectOffset(10, 10, 20, 20);
-        vLayout.childAlignment = TextAnchor.UpperCenter;
-        vLayout.childControlHeight = false;
-        vLayout.childControlWidth = true;
-        vLayout.childForceExpandHeight = false;
-        vLayout.childForceExpandWidth = true;
-
-        ContentSizeFitter csf = content.AddComponent<ContentSizeFitter>();
-        csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scrollRect.content = contentRt;
-        contentContainer = content.transform;
-
-        // Nút Đóng
-        Button closeBtn = CreateButton(shopPanel.transform, "CloseBtn", LocalizationManager.Get("shop_back_menu"),
-            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
-            new Vector2(0, 90), new Vector2(500, 85), 36, new Color(0.85f, 0.25f, 0.25f), out closeBtnText);
-        closeBtn.onClick.AddListener(HideShop);
-
-        shopPanel.SetActive(false);
     }
 
     private void SwitchTab(ShopManager.ItemType type)
     {
         currentTab = type;
-        Color activeCol = new Color(0f, 0.75f, 0.95f);
-        Color inactiveCol = new Color(0.18f, 0.22f, 0.32f);
+        Color activeCol = new Color(0.05f, 0.55f, 0.88f);
+        Color inactiveCol = new Color(0.12f, 0.15f, 0.24f);
 
-        tabPlayerBtn.GetComponent<Image>().color = (type == ShopManager.ItemType.PlayerSkin) ? activeCol : inactiveCol;
-        tabWallBtn.GetComponent<Image>().color = (type == ShopManager.ItemType.WallSkin) ? activeCol : inactiveCol;
-        tabEffectBtn.GetComponent<Image>().color = (type == ShopManager.ItemType.Effect) ? activeCol : inactiveCol;
+        if (tabPlayerBtn != null)
+            tabPlayerBtn.GetComponent<Image>().color = (type == ShopManager.ItemType.PlayerSkin) ? activeCol : inactiveCol;
+        if (tabWallBtn != null)
+            tabWallBtn.GetComponent<Image>().color = (type == ShopManager.ItemType.WallSkin) ? activeCol : inactiveCol;
+        if (tabEffectBtn != null)
+            tabEffectBtn.GetComponent<Image>().color = (type == ShopManager.ItemType.Effect) ? activeCol : inactiveCol;
 
         RefreshShopItems();
     }
@@ -261,13 +205,27 @@ public class ShopUI : MonoBehaviour
 
     public void RefreshShopItems()
     {
-        if (contentContainer == null || ShopManager.Instance == null) return;
+        if (shopPanel == null) FindShopUI();
+        if (contentContainer == null) return;
+
+        if (ShopManager.Instance == null)
+        {
+            var existingMgr = FindAnyObjectByType<ShopManager>();
+            if (existingMgr == null)
+            {
+                var mgrObj = new GameObject("ShopManager");
+                mgrObj.AddComponent<ShopManager>();
+            }
+        }
+        if (ShopManager.Instance == null) return;
 
         UpdateCoinDisplay();
 
         // Xóa các card cũ
-        foreach (Transform child in contentContainer)
-            Destroy(child.gameObject);
+        for (int i = contentContainer.childCount - 1; i >= 0; i--)
+        {
+            Destroy(contentContainer.GetChild(i).gameObject);
+        }
 
         List<ShopManager.ShopItemData> items = ShopManager.Instance.GetItems(currentTab);
         int equippedIndex = ShopManager.Instance.GetEquippedIndex(currentTab);
@@ -284,64 +242,112 @@ public class ShopUI : MonoBehaviour
 
     private void CreateItemCard(Transform parent, ShopManager.ShopItemData item, int index, bool isEquipped)
     {
-        GameObject card = new GameObject("Card_" + item.displayName);
-        card.transform.SetParent(parent, false);
+        // Tạo card — dùng Layer Lab prefab nếu có, ngược lại tạo card bo góc cao cấp
+        GameObject card;
+        if (itemCardPrefab != null)
+        {
+            card = Instantiate(itemCardPrefab, parent);
+        }
+        else
+        {
+            card = new GameObject("Card_" + item.displayName);
+            card.transform.SetParent(parent, false);
+            RectTransform cardRt = card.AddComponent<RectTransform>();
+            cardRt.sizeDelta = new Vector2(880, 150);
 
-        RectTransform cardRt = card.AddComponent<RectTransform>();
-        cardRt.sizeDelta = new Vector2(940, 160);
+            // Card background — Equipped items get a subtle glowing border & green tint
+            Image cardBg = card.AddComponent<Image>();
+            cardBg.color = isEquipped
+                ? new Color(0.06f, 0.24f, 0.18f, 0.95f)
+                : new Color(0.08f, 0.11f, 0.18f, 0.92f);
 
-        Image cardBg = card.AddComponent<Image>();
-        cardBg.color = isEquipped ? new Color(0.08f, 0.25f, 0.22f, 0.9f) : new Color(0.12f, 0.15f, 0.22f, 0.9f);
+            // Viền highlight cho item đang trang bị
+            if (isEquipped)
+            {
+                GameObject border = new GameObject("EquippedBorder");
+                border.transform.SetParent(card.transform, false);
+                RectTransform bRt = border.AddComponent<RectTransform>();
+                bRt.anchorMin = Vector2.zero;
+                bRt.anchorMax = Vector2.one;
+                bRt.offsetMin = new Vector2(-3, -3);
+                bRt.offsetMax = new Vector2(3, 3);
+                bRt.SetAsFirstSibling();
+                Image bImg = border.AddComponent<Image>();
+                bImg.color = new Color(0.18f, 0.95f, 0.55f, 0.7f);
+            }
+        }
+        card.name = "Card_" + item.displayName;
 
-        // Preview Box / Icon
+        // BẮT BUỘC có LayoutElement để VerticalLayoutGroup + ContentSizeFitter hoạt động chính xác
+        LayoutElement le = card.GetComponent<LayoutElement>() ?? card.AddComponent<LayoutElement>();
+        le.minHeight = 150f;
+        le.preferredHeight = 150f;
+        le.minWidth = 880f;
+        le.preferredWidth = 880f;
+        le.flexibleWidth = 1f;
+
+        // Preview Box — Khung hiển thị màu/vật liệu phát sáng
+        GameObject previewFrame = new GameObject("PreviewFrame");
+        previewFrame.transform.SetParent(card.transform, false);
+        RectTransform pfRt = previewFrame.AddComponent<RectTransform>();
+        pfRt.anchorMin = new Vector2(0f, 0.5f);
+        pfRt.anchorMax = new Vector2(0f, 0.5f);
+        pfRt.pivot = new Vector2(0f, 0.5f);
+        pfRt.anchoredPosition = new Vector2(20, 0);
+        pfRt.sizeDelta = new Vector2(110, 110);
+        Image pfImg = previewFrame.AddComponent<Image>();
+        pfImg.color = new Color(0.15f, 0.18f, 0.28f, 0.95f);
+
         GameObject previewObj = new GameObject("PreviewColor");
-        previewObj.transform.SetParent(card.transform, false);
+        previewObj.transform.SetParent(previewFrame.transform, false);
         RectTransform prevRt = previewObj.AddComponent<RectTransform>();
-        prevRt.anchorMin = new Vector2(0f, 0.5f);
-        prevRt.anchorMax = new Vector2(0f, 0.5f);
-        prevRt.pivot = new Vector2(0f, 0.5f);
-        prevRt.anchoredPosition = new Vector2(25, 0);
-        prevRt.sizeDelta = new Vector2(110, 110);
+        prevRt.anchorMin = Vector2.zero;
+        prevRt.anchorMax = Vector2.one;
+        prevRt.offsetMin = new Vector2(8, 8);
+        prevRt.offsetMax = new Vector2(-8, -8);
         Image prevImg = previewObj.AddComponent<Image>();
         prevImg.color = item.previewColor;
 
-        // Display Name
-        CreateText(card.transform, "ItemName", item.displayName,
-            new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-            new Vector2(165, 25), new Vector2(400, 50), 38, Color.white, TextAlignmentOptions.Left);
+        // Display Name — Tên sản phẩm
+        CreateCardText(card.transform, "ItemName", item.displayName,
+            new Vector2(0f, 0.5f), new Vector2(150, 22), new Vector2(400, 46),
+            34, Color.white, TextAlignmentOptions.Left);
 
         // Price / Status text
         string statusStr = item.isUnlocked
             ? (isEquipped ? LocalizationManager.Get("shop_status_equipped") : LocalizationManager.Get("shop_status_owned"))
             : LocalizationManager.Get("shop_price_format", item.price);
 
-        Color statusColor = item.isUnlocked ? (isEquipped ? new Color(0.2f, 1f, 0.5f) : Color.gray) : new Color(1f, 0.85f, 0.2f);
-        CreateText(card.transform, "ItemStatus", statusStr,
-            new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-            new Vector2(165, -25), new Vector2(400, 40), 28, statusColor, TextAlignmentOptions.Left);
+        Color statusColor = item.isUnlocked
+            ? (isEquipped ? new Color(0.25f, 0.95f, 0.55f) : new Color(0.55f, 0.65f, 0.8f))
+            : new Color(1f, 0.85f, 0.2f);
 
-        // Action Button
+        CreateCardText(card.transform, "ItemStatus", statusStr,
+            new Vector2(0f, 0.5f), new Vector2(150, -22), new Vector2(400, 36),
+            26, statusColor, TextAlignmentOptions.Left);
+
+        // Action Button — Nút hành động bên phải
         string btnLabel;
         Color btnColor;
         if (isEquipped)
         {
             btnLabel = LocalizationManager.Get("shop_btn_equipped");
-            btnColor = new Color(0.15f, 0.6f, 0.35f);
+            btnColor = new Color(0.12f, 0.58f, 0.35f);
         }
         else if (item.isUnlocked)
         {
             btnLabel = LocalizationManager.Get("shop_btn_equip");
-            btnColor = new Color(0f, 0.7f, 0.95f);
+            btnColor = new Color(0.05f, 0.55f, 0.88f);
         }
         else
         {
             btnLabel = LocalizationManager.Get("shop_btn_buy");
-            btnColor = new Color(1f, 0.6f, 0f);
+            btnColor = new Color(0.95f, 0.55f, 0.05f);
         }
 
-        Button actionBtn = CreateButton(card.transform, "ActionBtn", btnLabel,
-            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-            new Vector2(-30, 0), new Vector2(240, 90), 30, btnColor, out _);
+        Button actionBtn = CreateCardButton(card.transform, "ActionBtn", btnLabel,
+            new Vector2(1f, 0.5f), new Vector2(-22, 0), new Vector2(220, 82),
+            28, btnColor);
 
         actionBtn.onClick.AddListener(() =>
         {
@@ -350,11 +356,24 @@ public class ShopUI : MonoBehaviour
             if (item.isUnlocked)
             {
                 ShopManager.Instance.EquipItem(currentTab, index);
+                if (UIParticleFXManager.Instance != null)
+                    UIParticleFXManager.Instance.PlaySparkle(actionBtn.GetComponent<RectTransform>());
             }
             else
             {
-                ShopManager.Instance.BuyItem(currentTab, index);
+                bool success = ShopManager.Instance.BuyItem(currentTab, index);
+                if (success)
+                {
+                    if (UIParticleFXManager.Instance != null)
+                        UIParticleFXManager.Instance.PlaySpreadCircle(actionBtn.GetComponent<RectTransform>());
+                }
+                else
+                {
+                    Debug.LogWarning("[ShopUI] Không đủ vàng để mua vật phẩm này!");
+                    AudioManager.Instance?.PlayObstacleHitSound();
+                }
             }
+
             RefreshShopItems();
         });
     }
@@ -368,20 +387,26 @@ public class ShopUI : MonoBehaviour
         }
     }
 
-    private static TextMeshProUGUI CreateText(Transform parent, string name, string text,
-        Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot,
-        Vector2 anchoredPos, Vector2 size, int fontSize, Color color, TextAlignmentOptions align)
+    // =========================================================================
+    // HELPERS — Chỉ dùng cho sinh item card động (không dùng cho panel tĩnh)
+    // =========================================================================
+
+    private static TextMeshProUGUI CreateCardText(Transform parent, string name, string text,
+        Vector2 anchor, Vector2 anchoredPos, Vector2 size,
+        int fontSize, Color color, TextAlignmentOptions align)
     {
         GameObject obj = new GameObject(name);
         obj.transform.SetParent(parent, false);
         RectTransform rt = obj.AddComponent<RectTransform>();
-        rt.anchorMin = anchorMin;
-        rt.anchorMax = anchorMax;
-        rt.pivot = pivot;
+        rt.anchorMin = anchor;
+        rt.anchorMax = anchor;
+        rt.pivot = anchor;
         rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = size;
 
         TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
+        if (TMP_Settings.defaultFontAsset != null)
+            tmp.font = TMP_Settings.defaultFontAsset;
         tmp.text = text;
         tmp.fontSize = fontSize;
         tmp.color = color;
@@ -390,16 +415,16 @@ public class ShopUI : MonoBehaviour
         return tmp;
     }
 
-    private static Button CreateButton(Transform parent, string name, string label,
-        Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot,
-        Vector2 anchoredPos, Vector2 size, int fontSize, Color bgColor, out TextMeshProUGUI labelTmp)
+    private static Button CreateCardButton(Transform parent, string name, string label,
+        Vector2 anchor, Vector2 anchoredPos, Vector2 size,
+        int fontSize, Color bgColor)
     {
         GameObject obj = new GameObject(name);
         obj.transform.SetParent(parent, false);
         RectTransform rt = obj.AddComponent<RectTransform>();
-        rt.anchorMin = anchorMin;
-        rt.anchorMax = anchorMax;
-        rt.pivot = pivot;
+        rt.anchorMin = anchor;
+        rt.anchorMax = anchor;
+        rt.pivot = anchor;
         rt.anchoredPosition = anchoredPos;
         rt.sizeDelta = size;
 
@@ -408,9 +433,21 @@ public class ShopUI : MonoBehaviour
 
         Button btn = obj.AddComponent<Button>();
 
-        labelTmp = CreateText(obj.transform, name + "_Label", label,
-            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f),
-            Vector2.zero, Vector2.zero, fontSize, Color.white, TextAlignmentOptions.Center);
+        CreateCardText(obj.transform, name + "_Label", label,
+            Vector2.zero, Vector2.zero, Vector2.zero,
+            fontSize, Color.white, TextAlignmentOptions.Center);
+
+        // Stretch label trong button
+        RectTransform labelRt = obj.transform.Find(name + "_Label")?.GetComponent<RectTransform>();
+        if (labelRt != null)
+        {
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.pivot = new Vector2(0.5f, 0.5f);
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
+        }
+
         return btn;
     }
 }

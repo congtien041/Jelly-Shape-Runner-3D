@@ -2538,7 +2538,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Admin
+  m_text: Jelly Runner
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5612a5d1c53475445b37458ccbb59c57, type: 2}
   m_sharedMaterial: {fileID: 2766200020102550909, guid: 5612a5d1c53475445b37458ccbb59c57, type: 2}
@@ -8027,7 +8027,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "26 Tu\u1ED5i"
+  m_text: "18 Tu\u1ED5i"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5612a5d1c53475445b37458ccbb59c57, type: 2}
   m_sharedMaterial: {fileID: 2766200020102550909, guid: 5612a5d1c53475445b37458ccbb59c57, type: 2}
@@ -13149,7 +13149,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -25, y: -132}
+  m_AnchoredPosition: {x: -25, y: -140}
   m_SizeDelta: {x: 360, y: 90}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1416327756
@@ -18258,7 +18258,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "26 Tu\u1ED5i"
+  m_text: "18 Tu\u1ED5i"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5612a5d1c53475445b37458ccbb59c57, type: 2}
   m_sharedMaterial: {fileID: 2766200020102550909, guid: 5612a5d1c53475445b37458ccbb59c57, type: 2}
@@ -37919,7 +37919,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.32307693
+  m_Value: 0.2
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []

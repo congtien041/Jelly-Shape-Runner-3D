@@ -37,6 +37,10 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
     [SerializeField] private float jellyBounceSpeed = 4.8f;
     [SerializeField] private float jellyBounceAmount = 0.18f;
 
+    [Header("--- Mô Hình Nhân Vật 3D ---")]
+    [SerializeField] private GameObject foxModelPrefab;
+    [SerializeField] private GameObject trexModelPrefab;
+
     // Thành phần Studio 3D
     private GameObject studioRoot;
     private Camera previewCamera;
@@ -74,10 +78,19 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
         // Đăng ký lắng nghe sự kiện thay đổi trang bị từ ShopManager
         if (ShopManager.Instance != null)
         {
+            ShopManager.Instance.OnShopDataUpdated -= RefreshEquippedCharacter;
             ShopManager.Instance.OnShopDataUpdated += RefreshEquippedCharacter;
         }
 
         RefreshEquippedCharacter();
+    }
+
+    private void OnEnable()
+    {
+        if (characterPivot != null)
+        {
+            RefreshEquippedCharacter();
+        }
     }
 
     private void OnDestroy()
@@ -229,24 +242,66 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
         JellyPlayer.CharacterType charType = JellyPlayer.CharacterType.ClassicJelly;
         Material playerSkinMat = null;
         GameObject effectPrefab = null;
+        Color skinColorFallback = new Color(0f, 0.9f, 1f);
 
+        // Đọc chính xác chỉ số trang bị (hỗ trợ cả 2 chuẩn key)
+        int equippedPlayerIndex = 0;
         if (ShopManager.Instance != null)
         {
-            int playerSkinIdx = ShopManager.Instance.GetEquippedIndex(ShopManager.ItemType.PlayerSkin);
+            equippedPlayerIndex = ShopManager.Instance.GetEquippedIndex(ShopManager.ItemType.PlayerSkin);
+        }
+        else
+        {
+            equippedPlayerIndex = PlayerPrefs.GetInt("Shop_Equipped_PlayerSkin", PlayerPrefs.GetInt("Equipped_PlayerSkin", 0));
+        }
+
+        // Lấy thông tin từ ShopManager
+        if (ShopManager.Instance != null)
+        {
             var items = ShopManager.Instance.GetItems(ShopManager.ItemType.PlayerSkin);
-            if (playerSkinIdx >= 0 && playerSkinIdx < items.Count)
+            if (equippedPlayerIndex >= 0 && equippedPlayerIndex < items.Count)
             {
-                var item = items[playerSkinIdx];
+                var item = items[equippedPlayerIndex];
                 charType = item.characterType;
                 playerSkinMat = item.materialAsset;
+                skinColorFallback = item.previewColor;
+
+                if (playerSkinMat == null && !string.IsNullOrEmpty(item.assetName))
+                {
+                    playerSkinMat = Resources.Load<Material>($"Shop/{item.assetName}");
+                }
             }
 
             effectPrefab = ShopManager.Instance.GetEquippedEffectPrefab();
         }
         else
         {
-            // Fallback nếu chưa nạp ShopManager
-            charType = (JellyPlayer.CharacterType)PlayerPrefs.GetInt("SelectedCharacter", 0);
+            if (equippedPlayerIndex == 1) charType = JellyPlayer.CharacterType.Fox;
+            else if (equippedPlayerIndex == 2) charType = JellyPlayer.CharacterType.TRex;
+            else charType = (JellyPlayer.CharacterType)PlayerPrefs.GetInt("SelectedCharacter", 0);
+
+            Color[] defaultColors = {
+                new Color(0f, 0.9f, 1f),       // 0: Cyan
+                new Color(1f, 0.55f, 0.1f),    // 1: Fox
+                new Color(0.2f, 0.8f, 0.3f),   // 2: TRex
+                new Color(1f, 0.85f, 0.15f),   // 3: Gold
+                new Color(0.65f, 0.15f, 1f),   // 4: Galaxy
+                new Color(1f, 0.3f, 0.05f),    // 5: Magma
+                new Color(0.05f, 0.95f, 0.45f),// 6: Emerald
+                new Color(0.2f, 0.15f, 0.35f)  // 7: Void
+            };
+            if (equippedPlayerIndex >= 0 && equippedPlayerIndex < defaultColors.Length)
+                skinColorFallback = defaultColors[equippedPlayerIndex];
+        }
+
+        if (effectPrefab == null)
+        {
+            int equippedEffectIndex = PlayerPrefs.GetInt("Shop_Equipped_Effect", PlayerPrefs.GetInt("Equipped_Effect", 0));
+            string[] effectNames = { "", "FX_RainbowTrail", "FX_GoldSparkles", "FX_FireAura", "FX_CosmicElectric" };
+            if (equippedEffectIndex > 0 && equippedEffectIndex < effectNames.Length)
+            {
+                effectPrefab = Resources.Load<GameObject>($"Effects/{effectNames[equippedEffectIndex]}");
+            }
         }
 
         currentLoadedType = charType;
@@ -271,7 +326,7 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
         }
         else
         {
-            SpawnClassicJellyModel(playerSkinMat);
+            SpawnClassicJellyModel(playerSkinMat, skinColorFallback);
         }
 
         // 4. Áp dụng hiệu ứng Particle/Trail đang trang bị
@@ -295,7 +350,7 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
     /// <summary>
     /// Khởi tạo khối Jelly mềm dẻo với Skin đã trang bị
     /// </summary>
-    private void SpawnClassicJellyModel(Material skinMat)
+    private void SpawnClassicJellyModel(Material skinMat, Color fallbackColor)
     {
         currentModelInstance = GameObject.CreatePrimitive(PrimitiveType.Cube);
         currentModelInstance.name = "Preview_ClassicJelly";
@@ -313,12 +368,17 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
         }
         else
         {
-            // Fallback Neon Cyan nếu chưa có material
-            Shader s = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Shader s = Shader.Find("Universal Render Pipeline/Lit")
+                    ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                    ?? Shader.Find("Standard");
             Material defaultMat = new Material(s);
-            Color cyan = new Color(0f, 0.88f, 1f);
-            defaultMat.color = cyan;
-            if (defaultMat.HasProperty("_BaseColor")) defaultMat.SetColor("_BaseColor", cyan);
+            defaultMat.color = fallbackColor;
+            if (defaultMat.HasProperty("_BaseColor")) defaultMat.SetColor("_BaseColor", fallbackColor);
+            if (defaultMat.HasProperty("_EmissionColor"))
+            {
+                defaultMat.EnableKeyword("_EMISSION");
+                defaultMat.SetColor("_EmissionColor", fallbackColor * 0.45f);
+            }
             r.material = defaultMat;
         }
     }
@@ -332,27 +392,34 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
 
         if (type == JellyPlayer.CharacterType.Fox)
         {
-            prefab = Resources.Load<GameObject>("Characters/Model_Fox");
+            prefab = foxModelPrefab
+                  ?? Resources.Load<GameObject>("Characters/Model_Fox")
+                  ?? Resources.Load<GameObject>("Model_Fox");
 #if UNITY_EDITOR
             if (prefab == null)
-                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_Fox.prefab")
+                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Model_Fox.prefab")
+                      ?? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_Fox.prefab")
                       ?? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/CuteMagic_CubeAnimals_Free/CubeAnimals_Free/Prefab_1/Fox.prefab");
 #endif
         }
         else if (type == JellyPlayer.CharacterType.TRex)
         {
-            prefab = Resources.Load<GameObject>("Characters/Model_TRex");
+            prefab = trexModelPrefab
+                  ?? Resources.Load<GameObject>("Characters/Model_TRex")
+                  ?? Resources.Load<GameObject>("Model_TRex");
 #if UNITY_EDITOR
             if (prefab == null)
-                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_TRex.prefab")
+                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Model_TRex.prefab")
+                      ?? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_TRex.prefab")
                       ?? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/CuteMagic_CubeAnimals_T-REX_Free/CubeAnimals_T-REX_Free/Prefab/Animals/T_Rex.prefab");
 #endif
         }
 
         if (prefab == null)
         {
-            // Nếu không tìm thấy prefab, fallback về Jelly
-            SpawnClassicJellyModel(null);
+            Debug.LogWarning($"[MenuPreview] Không tìm thấy prefab 3D cho {type}, chuyển sang khối vuông.");
+            Color fallbackColor = (type == JellyPlayer.CharacterType.Fox) ? new Color(1f, 0.55f, 0.1f) : new Color(0.2f, 0.8f, 0.3f);
+            SpawnClassicJellyModel(null, fallbackColor);
             return;
         }
 
@@ -364,7 +431,11 @@ public class MenuCharacterPreview : MonoBehaviour, IDragHandler, IPointerDownHan
         float scale = (type == JellyPlayer.CharacterType.Fox) ? 1.45f : 1.3f;
         currentModelInstance.transform.localScale = Vector3.one * scale;
 
-        // Xóa các component gameplay không cần thiết
+        // Đảm bảo tất cả Renderers đều active
+        foreach (Renderer rend in currentModelInstance.GetComponentsInChildren<Renderer>(true))
+            rend.enabled = true;
+
+        // Xóa các collider
         foreach (Collider col in currentModelInstance.GetComponentsInChildren<Collider>(true))
             Destroy(col);
 

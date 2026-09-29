@@ -377,6 +377,14 @@ public class MainMenuUI : MonoBehaviour
                            ?? cTrans.Find("CoinDisplay")?.GetComponent<TextMeshProUGUI>()
                            ?? pCard.Find("CoinDisplay")?.GetComponent<TextMeshProUGUI>();
 
+            if (coinDisplayText != null)
+            {
+                Button cBtn = coinDisplayText.GetComponent<Button>() ?? coinDisplayText.gameObject.AddComponent<Button>();
+                cBtn.transition = Selectable.Transition.None;
+                cBtn.onClick.RemoveListener(OnCoinTextClicked);
+                cBtn.onClick.AddListener(OnCoinTextClicked);
+            }
+
             Button pBtn = pCard.GetComponent<Button>();
             if (pBtn != null)
             {
@@ -693,6 +701,11 @@ public class MainMenuUI : MonoBehaviour
         {
             coinDisplayText.text = LocalizationManager.Get("menu_coin_format", totalCoins);
         }
+    }
+
+    private void OnCoinTextClicked()
+    {
+        CurrencyManager.Instance?.SecretTapAddCoins();
     }
 
     private void UpdateAvatarSelectionUI()

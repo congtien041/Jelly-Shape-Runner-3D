@@ -35,9 +35,59 @@ public class CurrencyManager : MonoBehaviour
         LoadCoins();
     }
 
+    private int secretTapCount = 0;
+    private float lastTapTime = 0f;
+
     private void Start()
     {
         UpdateUI();
+    }
+
+    private void Update()
+    {
+        // === PHÍM TẮT CHỈNH VÀNG CHO BẢN BUILD (PC / TEST) ===
+        // F8: Thêm +5,000 vàng ngay lập tức
+        if (Input.GetKeyDown(KeyCode.F8))
+        {
+            AddCoins(5000);
+            AudioManager.Instance?.PlayShopBuySound();
+            Debug.Log($"<color=#FFD700><b>[Cheat Vàng] Đã cộng +5,000 vàng! Tổng: {totalCoins}</b></color>");
+        }
+        // F9: Đặt luôn 999,999 vàng (Full Vàng)
+        else if (Input.GetKeyDown(KeyCode.F9))
+        {
+            SetCoins(999999);
+            AudioManager.Instance?.PlayHighScoreSound();
+            Debug.Log($"<color=#FFD700><b>[Cheat Vàng] Đã đặt 999,999 vàng!</b></color>");
+        }
+        // F7: Reset vàng về 0
+        else if (Input.GetKeyDown(KeyCode.F7))
+        {
+            SetCoins(0);
+            Debug.Log("<color=#FF6666><b>[Cheat Vàng] Đã đưa vàng về 0!</b></color>");
+        }
+    }
+
+    /// <summary>
+    /// Chạm/click liên tục 5 lần vào số vàng để nhận +10,000 vàng (hỗ trợ cả Mobile khi build APK).
+    /// </summary>
+    public void SecretTapAddCoins()
+    {
+        if (Time.time - lastTapTime > 2.0f)
+        {
+            secretTapCount = 0;
+        }
+
+        secretTapCount++;
+        lastTapTime = Time.time;
+
+        if (secretTapCount >= 5)
+        {
+            secretTapCount = 0;
+            AddCoins(10000);
+            AudioManager.Instance?.PlayHighScoreSound();
+            Debug.Log($"<color=#FFD700><b>[Secret Tap] Đã mở khóa +10,000 vàng!</b></color>");
+        }
     }
 
     /// <summary>

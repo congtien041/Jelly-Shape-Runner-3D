@@ -18288,6 +18288,8 @@ MonoBehaviour:
   returnToCenterDelay: 1.6
   jellyBounceSpeed: 4.8
   jellyBounceAmount: 0.18
+  foxModelPrefab: {fileID: 4491801674843915242, guid: 05804f97f9bcbb2418a945d2e8034811, type: 3}
+  trexModelPrefab: {fileID: 4421062536037157730, guid: d25d994e2424c48429e5e39d6b153363, type: 3}
 --- !u!1 &4950146749271307687
 GameObject:
   m_ObjectHideFlags: 0

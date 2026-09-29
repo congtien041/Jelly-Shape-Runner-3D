@@ -87,7 +87,11 @@ public class UIManager : MonoBehaviour
         SetupButtonListeners();
 
         // Tự động gán âm thanh click nảy cho 100% các nút trong gameplay HUD / Pause / GameOver
-        AudioManager.AutoHookAllButtons(gameObject);
+        Canvas rootCanvas = FindAnyObjectByType<Canvas>();
+        if (rootCanvas != null)
+            AudioManager.AutoHookAllButtons(rootCanvas.gameObject);
+        else
+            AudioManager.AutoHookAllButtons(gameObject);
 
         // Lắng nghe sự kiện đổi ngôn ngữ
         LocalizationManager.OnLanguageChanged += RefreshLocalizedTexts;
@@ -199,6 +203,11 @@ public class UIManager : MonoBehaviour
                 bestScoreText.text = LocalizationManager.Get("gameover_best", best);
 
             RefreshLocalizedTexts();
+
+            if (score > 0 && score >= best)
+            {
+                AudioManager.Instance?.PlayHighScoreSound();
+            }
 
             // Hiển thị leaderboard
             if (leaderboardText != null && LeaderboardManager.Instance != null)

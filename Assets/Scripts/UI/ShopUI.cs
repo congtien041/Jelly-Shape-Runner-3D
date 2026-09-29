@@ -175,6 +175,7 @@ public class ShopUI : MonoBehaviour
             // ★ Animation Layer Lab: Trượt xuống và ẩn
             UIAnimator.SlideOutToBottom(shopPanel);
             AudioManager.Instance?.PlayPopupCloseSound();
+            MenuCharacterPreview.Instance?.RefreshEquippedCharacter();
         }
     }
 
@@ -367,6 +368,7 @@ public class ShopUI : MonoBehaviour
             {
                 ShopManager.Instance.EquipItem(currentTab, index);
                 AudioManager.Instance?.PlayShopEquipSound();
+                MenuCharacterPreview.Instance?.RefreshEquippedCharacter();
                 if (UIParticleFXManager.Instance != null)
                     UIParticleFXManager.Instance.PlaySparkle(actionBtn.GetComponent<RectTransform>());
             }
@@ -376,6 +378,8 @@ public class ShopUI : MonoBehaviour
                 if (success)
                 {
                     AudioManager.Instance?.PlayShopBuySound();
+                    MenuCharacterPreview.Instance?.RefreshEquippedCharacter();
+                    RefreshShopItems();
                     if (UIParticleFXManager.Instance != null)
                         UIParticleFXManager.Instance.PlaySpreadCircle(actionBtn.GetComponent<RectTransform>());
                 }

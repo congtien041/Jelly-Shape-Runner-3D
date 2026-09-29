@@ -112,6 +112,20 @@ public static class SetupMenuCharacterPreviewAndAudio
         // MenuCharacterPreview script
         MenuCharacterPreview previewScript = previewObj.GetComponent<MenuCharacterPreview>() ?? previewObj.AddComponent<MenuCharacterPreview>();
 
+        SerializedObject previewSO = new SerializedObject(previewScript);
+        SerializedProperty foxProp = previewSO.FindProperty("foxModelPrefab");
+        SerializedProperty trexProp = previewSO.FindProperty("trexModelPrefab");
+        GameObject foxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Quirky Series Ultimate/Forest Release/Characters/Fox.prefab")
+                            ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Model_Fox.prefab")
+                            ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_Fox.prefab");
+        GameObject trexPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Quirky Series Ultimate/Prehistoric Release/Characters/TRex.prefab")
+                             ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Model_TRex.prefab")
+                             ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_TRex.prefab");
+
+        if (foxProp != null) foxProp.objectReferenceValue = foxPrefab;
+        if (trexProp != null) trexProp.objectReferenceValue = trexPrefab;
+        previewSO.ApplyModifiedProperties();
+
         // Thêm nhãn hướng dẫn vuốt tinh tế
         Transform hintTrans = previewObj.transform.Find("SwipeHintText");
         RectTransform hintRt;
@@ -217,8 +231,21 @@ public static class SetupMenuCharacterPreviewAndAudio
             rawImg.color = Color.white;
             rawImg.raycastTarget = true;
 
-            if (previewObj.GetComponent<MenuCharacterPreview>() == null)
-                previewObj.AddComponent<MenuCharacterPreview>();
+            MenuCharacterPreview previewScript = previewObj.GetComponent<MenuCharacterPreview>() ?? previewObj.AddComponent<MenuCharacterPreview>();
+
+            SerializedObject previewSO = new SerializedObject(previewScript);
+            SerializedProperty foxProp = previewSO.FindProperty("foxModelPrefab");
+            SerializedProperty trexProp = previewSO.FindProperty("trexModelPrefab");
+            GameObject foxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Quirky Series Ultimate/Forest Release/Characters/Fox.prefab")
+                                ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Model_Fox.prefab")
+                                ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_Fox.prefab");
+            GameObject trexPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Quirky Series Ultimate/Prehistoric Release/Characters/TRex.prefab")
+                                 ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Model_TRex.prefab")
+                                 ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Model_TRex.prefab");
+
+            if (foxProp != null) foxProp.objectReferenceValue = foxPrefab;
+            if (trexProp != null) trexProp.objectReferenceValue = trexPrefab;
+            previewSO.ApplyModifiedProperties();
 
             previewObj.transform.SetSiblingIndex(2);
         }

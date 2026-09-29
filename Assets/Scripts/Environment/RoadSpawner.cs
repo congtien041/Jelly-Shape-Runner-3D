@@ -16,6 +16,9 @@ public class RoadSpawner : MonoBehaviour
     [Tooltip("Chiều dài mỗi đoạn đường theo Z.")]
     [SerializeField] private float segmentLength = 100f;
 
+    [Tooltip("Material cho đường chạy. Nếu để trống, tự nạp Mat_Track từ Resources.")]
+    [SerializeField] private Material roadMaterial;
+
     [Tooltip("Số đoạn đường luôn hiện trước mặt Player.")]
     [SerializeField] private int segmentsAhead = 5;
 
@@ -97,6 +100,33 @@ public class RoadSpawner : MonoBehaviour
             seg = GameObject.CreatePrimitive(PrimitiveType.Cube);
             seg.name = "RoadSegment";
             seg.transform.SetParent(transform);
+
+            // Gán Material chuẩn URP để không bao giờ bị màu tím trong bản build
+            Renderer rend = seg.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                if (roadMaterial == null)
+                {
+                    roadMaterial = Resources.Load<Material>("Mat_Track");
+                    if (roadMaterial == null)
+                    {
+                        Shader urpShader = Shader.Find("Universal Render Pipeline/Lit")
+                                        ?? Shader.Find("Universal Render Pipeline/Simple Lit")
+                                        ?? Shader.Find("Standard");
+                        if (urpShader != null)
+                        {
+                            roadMaterial = new Material(urpShader);
+                            roadMaterial.color = new Color(0.12f, 0.15f, 0.22f);
+                            if (roadMaterial.HasProperty("_BaseColor")) roadMaterial.SetColor("_BaseColor", new Color(0.12f, 0.15f, 0.22f));
+                        }
+                    }
+                }
+
+                if (roadMaterial != null)
+                {
+                    rend.sharedMaterial = roadMaterial;
+                }
+            }
         }
 
         seg.transform.position = new Vector3(0f, -0.5f, zStart + segmentLength * 0.5f);

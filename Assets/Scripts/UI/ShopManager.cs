@@ -184,7 +184,24 @@ public class ShopManager : MonoBehaviour
         }
 #endif
 
-        // Runtime fallback (tạo dynamic material nếu cần)
+        // Nạp từ thư mục Resources (hoạt động 100% trong bản Build độc lập)
+        foreach (var item in playerSkins)
+        {
+            if (item.materialAsset == null && !string.IsNullOrEmpty(item.assetName))
+                item.materialAsset = Resources.Load<Material>($"Shop/{item.assetName}");
+        }
+        foreach (var item in wallSkins)
+        {
+            if (item.materialAsset == null && !string.IsNullOrEmpty(item.assetName))
+                item.materialAsset = Resources.Load<Material>($"Shop/{item.assetName}");
+        }
+        foreach (var item in effectSkills)
+        {
+            if (item.effectPrefab == null && !string.IsNullOrEmpty(item.assetName))
+                item.effectPrefab = Resources.Load<GameObject>($"Effects/{item.assetName}");
+        }
+
+        // Dynamic fallback nếu vẫn chưa có material
         Shader shader = Shader.Find("Universal Render Pipeline/Lit")
                      ?? Shader.Find("Universal Render Pipeline/Simple Lit")
                      ?? Shader.Find("Standard");
@@ -296,6 +313,7 @@ public class ShopManager : MonoBehaviour
         {
             case ItemType.PlayerSkin:
                 PlayerPrefs.SetInt(PREF_EQUIPPED_PLAYER, index);
+                PlayerPrefs.SetInt("SelectedCharacter", (int)list[index].characterType);
                 break;
             case ItemType.WallSkin:
                 PlayerPrefs.SetInt(PREF_EQUIPPED_WALL, index);

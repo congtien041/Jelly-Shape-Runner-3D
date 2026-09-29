@@ -86,6 +86,9 @@ public class UIManager : MonoBehaviour
         // Gắn nút (xóa listener cũ để tránh trùng lặp khi restart)
         SetupButtonListeners();
 
+        // Tự động gán âm thanh click nảy cho 100% các nút trong gameplay HUD / Pause / GameOver
+        AudioManager.AutoHookAllButtons(gameObject);
+
         // Lắng nghe sự kiện đổi ngôn ngữ
         LocalizationManager.OnLanguageChanged += RefreshLocalizedTexts;
 
@@ -225,6 +228,7 @@ public class UIManager : MonoBehaviour
 
             // ★ Animation Layer Lab: Trượt vào từ trên
             UIAnimator.SlideInFromTop(pausePanel);
+            AudioManager.Instance?.PlayPopupOpenSound();
 
             RefreshLocalizedTexts();
         }
@@ -236,6 +240,7 @@ public class UIManager : MonoBehaviour
         {
             // ★ Animation Layer Lab: Mờ dần rồi ẩn
             UIAnimator.FadeOutAndDisable(pausePanel);
+            AudioManager.Instance?.PlayPopupCloseSound();
         }
     }
 

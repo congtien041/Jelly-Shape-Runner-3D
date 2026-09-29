@@ -17,12 +17,25 @@ public static class AudioGenerator
     {
         EditorApplication.delayCall += () =>
         {
-            AssignAudioToSceneManagersSilent();
+            string checkFile = $"{AUDIO_FOLDER}/SFX_TabSwitch.wav";
+            if (!File.Exists(checkFile))
+            {
+                GenerateAllAudioFiles(false);
+            }
+            else
+            {
+                AssignAudioToSceneManagersSilent();
+            }
         };
     }
 
     [MenuItem("Tools/🎵 Tạo & Cài Đặt Toàn Bộ Âm Thanh Game (BGM & SFX)", false, 20)]
     public static void GenerateAllGameAudio()
+    {
+        GenerateAllAudioFiles(true);
+    }
+
+    public static void GenerateAllAudioFiles(bool showDialog = false)
     {
         if (!AssetDatabase.IsValidFolder(AUDIO_FOLDER))
         {
@@ -31,37 +44,48 @@ public static class AudioGenerator
 
         Debug.Log("<color=#00E5FF><b>[AudioGenerator] Bắt đầu tạo bộ âm thanh chuẩn cho Jelly Runner 3D...</b></color>");
 
-        // 1. Tiếng ăn đồng xu (Coin Collect) - Trong trẻo, leng keng kép 987Hz -> 1318Hz
+        // 1. Tiếng ăn đồng xu (Coin Collect)
         CreateCoinSound($"{AUDIO_FOLDER}/SFX_CoinCollect.wav");
 
-        // 2. Tiếng Jelly biến hình (Shape Shift) - Đàn hồi, dẻo dai "Bloop-Woosh"
+        // 2. Tiếng Jelly biến hình (Shape Shift)
         CreateShapeShiftSound($"{AUDIO_FOLDER}/SFX_ShapeShift.wav");
 
-        // 3. Tiếng vượt tường thành công (Pass Wall) - Tiếng chuông chiến thắng êm dịu
+        // 3. Tiếng vượt tường thành công (Pass Wall)
         CreatePassWallSound($"{AUDIO_FOLDER}/SFX_PassWall.wav");
 
-        // 4. Tiếng thua cuộc (Game Over) - Âm trầm bass tụt dần
+        // 4. Tiếng thua cuộc (Game Over)
         CreateGameOverSound($"{AUDIO_FOLDER}/SFX_GameOver.wav");
 
-        // 5. Tiếng click nút bấm UI (Button Click) - Tiếng "Pop" nảy của Layer Lab
+        // 5. Tiếng click nút bấm UI (Button Click)
         CreateButtonClickSound($"{AUDIO_FOLDER}/SFX_ButtonClick.wav");
 
-        // 6. Nhạc nền (BGM) - Giai điệu điện tử tươi vui, sôi động, lặp vô tận (Loop)
+        // 6. Nhạc nền (BGM)
         CreateBackgroundMusic($"{AUDIO_FOLDER}/BGM_RunnerLoop.wav");
+
+        // 7. Các âm thanh UI mở rộng:
+        CreateTabSwitchSound($"{AUDIO_FOLDER}/SFX_TabSwitch.wav");
+        CreateToggleSound($"{AUDIO_FOLDER}/SFX_Toggle.wav");
+        CreatePopupOpenSound($"{AUDIO_FOLDER}/SFX_PopupOpen.wav");
+        CreatePopupCloseSound($"{AUDIO_FOLDER}/SFX_PopupClose.wav");
+        CreateShopBuySound($"{AUDIO_FOLDER}/SFX_ShopBuy.wav");
+        CreateShopEquipSound($"{AUDIO_FOLDER}/SFX_ShopEquip.wav");
+        CreateShopErrorSound($"{AUDIO_FOLDER}/SFX_ShopError.wav");
+        CreateHighScoreSound($"{AUDIO_FOLDER}/SFX_HighScore.wav");
+        CreateGameStartSound($"{AUDIO_FOLDER}/SFX_GameStart.wav");
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log("<color=#00FF66><b>[AudioGenerator] Đã tạo thành công toàn bộ 6 file âm thanh (.wav) vào Assets/Audio!</b></color>");
+        Debug.Log("<color=#00FF66><b>[AudioGenerator] Đã tạo thành công toàn bộ 15 file âm thanh (.wav) vào Assets/Audio!</b></color>");
 
         // Gán tự động vào AudioManager trên Scene
-        EditorApplication.delayCall += AssignAudioToSceneManagers;
+        EditorApplication.delayCall += () => AssignAudioToSceneManagers(showDialog);
     }
 
     /// <summary>
     /// Tự động tìm và gán các file AudioClip vừa tạo vào AudioManager trên các Scene
     /// </summary>
-    private static void AssignAudioToSceneManagers()
+    private static void AssignAudioToSceneManagers(bool showDialog)
     {
         AudioClip bgm = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/BGM_RunnerLoop.wav");
         AudioClip sfxCoin = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_CoinCollect.wav");
@@ -70,7 +94,16 @@ public static class AudioGenerator
         AudioClip sfxOver = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_GameOver.wav");
         AudioClip sfxBtn = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ButtonClick.wav");
 
-        // Quét AudioManager trên scene hiện tại
+        AudioClip sfxTab = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_TabSwitch.wav");
+        AudioClip sfxToggle = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_Toggle.wav");
+        AudioClip sfxOpen = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_PopupOpen.wav");
+        AudioClip sfxClose = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_PopupClose.wav");
+        AudioClip sfxBuy = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ShopBuy.wav");
+        AudioClip sfxEquip = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ShopEquip.wav");
+        AudioClip sfxErr = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ShopError.wav");
+        AudioClip sfxHigh = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_HighScore.wav");
+        AudioClip sfxStart = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_GameStart.wav");
+
         AudioManager audioMgr = UnityEngine.Object.FindAnyObjectByType<AudioManager>();
         if (audioMgr != null)
         {
@@ -80,24 +113,34 @@ public static class AudioGenerator
             so.FindProperty("shapeShiftSound").objectReferenceValue = sfxShift;
             so.FindProperty("passWallSound").objectReferenceValue = sfxPass;
             so.FindProperty("gameOverSound").objectReferenceValue = sfxOver;
-            var btnProp = so.FindProperty("buttonClickSound");
-            if (btnProp != null) btnProp.objectReferenceValue = sfxBtn;
+            so.FindProperty("buttonClickSound").objectReferenceValue = sfxBtn;
+
+            var pTab = so.FindProperty("tabSwitchSound"); if (pTab != null) pTab.objectReferenceValue = sfxTab;
+            var pTog = so.FindProperty("toggleSound"); if (pTog != null) pTog.objectReferenceValue = sfxToggle;
+            var pOp = so.FindProperty("popupOpenSound"); if (pOp != null) pOp.objectReferenceValue = sfxOpen;
+            var pCl = so.FindProperty("popupCloseSound"); if (pCl != null) pCl.objectReferenceValue = sfxClose;
+            var pBuy = so.FindProperty("shopBuySound"); if (pBuy != null) pBuy.objectReferenceValue = sfxBuy;
+            var pEq = so.FindProperty("shopEquipSound"); if (pEq != null) pEq.objectReferenceValue = sfxEquip;
+            var pErr = so.FindProperty("shopErrorSound"); if (pErr != null) pErr.objectReferenceValue = sfxErr;
+            var pHi = so.FindProperty("highScoreSound"); if (pHi != null) pHi.objectReferenceValue = sfxHigh;
+            var pSt = so.FindProperty("gameStartSound"); if (pSt != null) pSt.objectReferenceValue = sfxStart;
+
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(audioMgr);
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(audioMgr.gameObject.scene);
-            Debug.Log("<color=#00FF66><b>[AudioGenerator] Đã gán đầy đủ BGM và SFX vào AudioManager trên Scene!</b></color>");
+            Debug.Log("<color=#00FF66><b>[AudioGenerator] Đã gán đầy đủ toàn bộ bộ BGM & SFX vào AudioManager trên Scene!</b></color>");
         }
 
-        if (!Application.isBatchMode)
+        if (showDialog && !Application.isBatchMode)
         {
             EditorUtility.DisplayDialog("Hoàn tất Âm Thanh", 
-                "Đã tạo và cài đặt thành công toàn bộ bộ âm thanh game:\n" +
-                "• 🎵 Nhạc nền sôi động (BGM Runner Loop)\n" +
-                "• 🪙 Tiếng ăn xu leng keng (Coin Collect)\n" +
-                "• 💧 Tiếng thạch Jelly biến hình (Shape Shift)\n" +
-                "• 🧱 Tiếng chui qua tường thành công (Pass Wall)\n" +
-                "• 💥 Tiếng thua cuộc (Game Over)\n" +
-                "• 🔘 Tiếng click nút UI (Button Click)", "Tuyệt vời!");
+                "Đã tạo và cài đặt thành công 15 file âm thanh chất lượng cao cho game:\n\n" +
+                "• Nhạc nền sôi động (BGM Runner Loop)\n" +
+                "• Đầy đủ âm thanh Click cho mọi nút (Button Click, Tab Switch, Toggle)\n" +
+                "• Âm thanh mở & đóng Popup (Popup Open / Close)\n" +
+                "• Âm thanh Cửa hàng (Mua thành công, Trang bị, Báo thiếu tiền)\n" +
+                "• Âm thanh Kỷ lục mới & Bắt đầu chạy\n" +
+                "• Tiếng ăn xu, biến hình, vượt tường & Game Over", "Tuyệt vời!");
         }
     }
 
@@ -110,7 +153,17 @@ public static class AudioGenerator
         AudioClip sfxOver = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_GameOver.wav");
         AudioClip sfxBtn = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ButtonClick.wav");
 
-        if (bgm == null) return; // Chưa import xong
+        AudioClip sfxTab = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_TabSwitch.wav");
+        AudioClip sfxToggle = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_Toggle.wav");
+        AudioClip sfxOpen = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_PopupOpen.wav");
+        AudioClip sfxClose = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_PopupClose.wav");
+        AudioClip sfxBuy = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ShopBuy.wav");
+        AudioClip sfxEquip = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ShopEquip.wav");
+        AudioClip sfxErr = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_ShopError.wav");
+        AudioClip sfxHigh = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_HighScore.wav");
+        AudioClip sfxStart = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AUDIO_FOLDER}/SFX_GameStart.wav");
+
+        if (bgm == null) return;
 
         AudioManager audioMgr = UnityEngine.Object.FindAnyObjectByType<AudioManager>();
         if (audioMgr != null)
@@ -118,30 +171,29 @@ public static class AudioGenerator
             SerializedObject so = new SerializedObject(audioMgr);
             bool needSave = false;
 
-            var bgmProp = so.FindProperty("backgroundMusic");
-            if (bgmProp != null && bgmProp.objectReferenceValue == null) { bgmProp.objectReferenceValue = bgm; needSave = true; }
+            var bgmProp = so.FindProperty("backgroundMusic"); if (bgmProp != null && bgmProp.objectReferenceValue == null) { bgmProp.objectReferenceValue = bgm; needSave = true; }
+            var coinProp = so.FindProperty("coinCollectSound"); if (coinProp != null && coinProp.objectReferenceValue == null) { coinProp.objectReferenceValue = sfxCoin; needSave = true; }
+            var shiftProp = so.FindProperty("shapeShiftSound"); if (shiftProp != null && shiftProp.objectReferenceValue == null) { shiftProp.objectReferenceValue = sfxShift; needSave = true; }
+            var passProp = so.FindProperty("passWallSound"); if (passProp != null && passProp.objectReferenceValue == null) { passProp.objectReferenceValue = sfxPass; needSave = true; }
+            var overProp = so.FindProperty("gameOverSound"); if (overProp != null && overProp.objectReferenceValue == null) { overProp.objectReferenceValue = sfxOver; needSave = true; }
+            var btnProp = so.FindProperty("buttonClickSound"); if (btnProp != null && btnProp.objectReferenceValue == null) { btnProp.objectReferenceValue = sfxBtn; needSave = true; }
 
-            var coinProp = so.FindProperty("coinCollectSound");
-            if (coinProp != null && coinProp.objectReferenceValue == null) { coinProp.objectReferenceValue = sfxCoin; needSave = true; }
-
-            var shiftProp = so.FindProperty("shapeShiftSound");
-            if (shiftProp != null && shiftProp.objectReferenceValue == null) { shiftProp.objectReferenceValue = sfxShift; needSave = true; }
-
-            var passProp = so.FindProperty("passWallSound");
-            if (passProp != null && passProp.objectReferenceValue == null) { passProp.objectReferenceValue = sfxPass; needSave = true; }
-
-            var overProp = so.FindProperty("gameOverSound");
-            if (overProp != null && overProp.objectReferenceValue == null) { overProp.objectReferenceValue = sfxOver; needSave = true; }
-
-            var btnProp = so.FindProperty("buttonClickSound");
-            if (btnProp != null && btnProp.objectReferenceValue == null) { btnProp.objectReferenceValue = sfxBtn; needSave = true; }
+            var pTab = so.FindProperty("tabSwitchSound"); if (pTab != null && pTab.objectReferenceValue == null) { pTab.objectReferenceValue = sfxTab; needSave = true; }
+            var pTog = so.FindProperty("toggleSound"); if (pTog != null && pTog.objectReferenceValue == null) { pTog.objectReferenceValue = sfxToggle; needSave = true; }
+            var pOp = so.FindProperty("popupOpenSound"); if (pOp != null && pOp.objectReferenceValue == null) { pOp.objectReferenceValue = sfxOpen; needSave = true; }
+            var pCl = so.FindProperty("popupCloseSound"); if (pCl != null && pCl.objectReferenceValue == null) { pCl.objectReferenceValue = sfxClose; needSave = true; }
+            var pBuy = so.FindProperty("shopBuySound"); if (pBuy != null && pBuy.objectReferenceValue == null) { pBuy.objectReferenceValue = sfxBuy; needSave = true; }
+            var pEq = so.FindProperty("shopEquipSound"); if (pEq != null && pEq.objectReferenceValue == null) { pEq.objectReferenceValue = sfxEquip; needSave = true; }
+            var pErr = so.FindProperty("shopErrorSound"); if (pErr != null && pErr.objectReferenceValue == null) { pErr.objectReferenceValue = sfxErr; needSave = true; }
+            var pHi = so.FindProperty("highScoreSound"); if (pHi != null && pHi.objectReferenceValue == null) { pHi.objectReferenceValue = sfxHigh; needSave = true; }
+            var pSt = so.FindProperty("gameStartSound"); if (pSt != null && pSt.objectReferenceValue == null) { pSt.objectReferenceValue = sfxStart; needSave = true; }
 
             if (needSave)
             {
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(audioMgr);
                 UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(audioMgr.gameObject.scene);
-                Debug.Log("<color=#00FF66><b>[AudioGenerator] Đã tự động gán BGM & SFX vào AudioManager trên Scene!</b></color>");
+                Debug.Log("<color=#00FF66><b>[AudioGenerator] Đã tự động gán đầy đủ BGM & SFX vào AudioManager trên Scene!</b></color>");
             }
         }
     }
@@ -318,6 +370,179 @@ public static class AudioGenerator
             samples[i] = (short)(Mathf.Clamp(mix, -1f, 1f) * 26000f);
         }
 
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateTabSwitchSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.07f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 55f);
+            float freq = 1200f + (t * 5000f);
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 26000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateToggleSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.08f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 45f);
+            float freq = t < 0.04f ? 620f : 1240f;
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 27000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreatePopupOpenSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.16f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float progress = t / duration;
+            float env = Mathf.Sin(progress * Mathf.PI);
+            float freq = Mathf.Lerp(300f, 900f, progress);
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t) + 0.3f * Mathf.Sin(2f * Mathf.PI * freq * 2f * t);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 28000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreatePopupCloseSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.14f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float progress = t / duration;
+            float env = Mathf.Sin(progress * Mathf.PI);
+            float freq = Mathf.Lerp(800f, 260f, progress);
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 26000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateShopBuySound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.5f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        float[] chord = new float[] { 523.25f, 659.25f, 783.99f, 1046.50f };
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 5.5f);
+            int step = Mathf.Clamp((int)(t / 0.08f), 0, chord.Length - 1);
+            float freq = chord[step];
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t) * 0.7f + Mathf.Sin(2f * Mathf.PI * freq * 2f * t) * 0.3f;
+            float shimmer = Mathf.Sin(2f * Mathf.PI * 3500f * t) * 0.15f * Mathf.Exp(-t * 12f);
+            samples[i] = (short)(Mathf.Clamp((wave + shimmer) * env, -1f, 1f) * 30000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateShopEquipSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.18f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 18f);
+            float freq = t < 0.07f ? 520f : 1040f;
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t) + 0.35f * Mathf.Sin(2f * Mathf.PI * 2200f * t);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 28000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateShopErrorSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.22f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 12f);
+            float wave = (Mathf.Sin(2f * Mathf.PI * 180f * t) > 0f ? 0.6f : -0.6f)
+                       + (Mathf.Sin(2f * Mathf.PI * 140f * t) > 0f ? 0.4f : -0.4f);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 24000f);
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateHighScoreSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.9f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        float[] notes = new float[] { 523.25f, 659.25f, 783.99f, 1046.50f, 1318.51f };
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            int nIdx = Mathf.Clamp((int)(t / 0.12f), 0, notes.Length - 1);
+            float freq = notes[nIdx];
+            float env = Mathf.Exp(-(t % 0.12f) * 5f) * Mathf.Clamp01((duration - t) / 0.4f);
+            if (t > 0.48f)
+            {
+                float susT = t - 0.48f;
+                env = Mathf.Exp(-susT * 2.5f);
+                float c = Mathf.Sin(2f * Mathf.PI * 523.25f * t);
+                float g = Mathf.Sin(2f * Mathf.PI * 783.99f * t);
+                float highC = Mathf.Sin(2f * Mathf.PI * 1046.50f * t);
+                float wave = (c * 0.35f + g * 0.35f + highC * 0.5f);
+                samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 31000f);
+            }
+            else
+            {
+                float wave = Mathf.Sin(2f * Mathf.PI * freq * t);
+                samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 28000f);
+            }
+        }
+        WriteWavFile(path, samples, sampleRate);
+    }
+
+    private static void CreateGameStartSound(string path)
+    {
+        int sampleRate = 44100;
+        float duration = 0.3f;
+        int sampleCount = (int)(sampleRate * duration);
+        short[] samples = new short[sampleCount];
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleRate;
+            float env = Mathf.Exp(-t * 9f);
+            float freq = t < 0.1f ? 523.25f : (t < 0.2f ? 659.25f : 1046.50f);
+            float wave = Mathf.Sin(2f * Mathf.PI * freq * t) + 0.3f * Mathf.Sin(2f * Mathf.PI * freq * 2f * t);
+            samples[i] = (short)(Mathf.Clamp(wave * env, -1f, 1f) * 29000f);
+        }
         WriteWavFile(path, samples, sampleRate);
     }
 

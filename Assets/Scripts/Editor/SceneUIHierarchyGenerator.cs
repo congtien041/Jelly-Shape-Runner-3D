@@ -95,23 +95,23 @@ public static class SceneUIHierarchyGenerator
         // Best Score — Badge style
         GameObject bestBadge = CreateRoundedPanel(menuPanel.transform, "BestScoreBadge",
             COL_BG_CARD, new Vector2(0.5f, 1f), new Vector2(0, -415), new Vector2(500, 60));
-        CreateText(menuPanel.transform, "BestScoreText", "🏆 KỶ LỤC: 0 ĐIỂM",
+        CreateText(menuPanel.transform, "BestScoreText", "KỶ LỤC: 0 ĐIỂM",
             new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
             new Vector2(0, -415), new Vector2(480, 55), 30, COL_ACCENT_GOLD, TextAlignmentOptions.Center);
 
         // ── Buttons Group — Centered, uniform spacing ──
         GameObject btnsGroup = CreatePanel(menuPanel.transform, "ButtonsGroup", Color.clear);
 
-        CreateStyledButton(btnsGroup.transform, "PlayButton", "▶  CHƠI NGAY",
+        CreateStyledButton(btnsGroup.transform, "PlayButton", "CHƠI NGAY",
             new Vector2(0, 100), new Vector2(440, 115), 44, COL_ACCENT_GREEN);
 
-        CreateStyledButton(btnsGroup.transform, "ShopButton", "🛍  CỬA HÀNG",
+        CreateStyledButton(btnsGroup.transform, "ShopButton", "CỬA HÀNG",
             new Vector2(0, -30), new Vector2(400, 100), 36, COL_ACCENT_ORANGE);
 
-        CreateStyledButton(btnsGroup.transform, "LeaderboardButton", "🏆  XẾP HẠNG",
+        CreateStyledButton(btnsGroup.transform, "LeaderboardButton", "XẾP HẠNG",
             new Vector2(0, -145), new Vector2(400, 95), 34, new Color(0.25f, 0.55f, 0.90f));
 
-        CreateStyledButton(btnsGroup.transform, "SettingsButton", "⚙  CÀI ĐẶT",
+        CreateStyledButton(btnsGroup.transform, "SettingsButton", "CÀI ĐẶT",
             new Vector2(0, -255), new Vector2(380, 90), 32, COL_ACCENT_PURPLE);
 
         CreateStyledButton(btnsGroup.transform, "QuitButton", "THOÁT",
@@ -167,17 +167,17 @@ public static class SceneUIHierarchyGenerator
         Image avImg = avatarFrame.AddComponent<Image>();
         avImg.color = new Color(0.12f, 0.28f, 0.55f);
 
-        CreateText(avatarFrame.transform, "Icon", "💎",
+        CreateText(avatarFrame.transform, "Icon", "",
             Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f),
             Vector2.zero, Vector2.zero, 42, Color.white, TextAlignmentOptions.Center);
 
-        CreateText(profileCard.transform, "PlayerName", "Người Chơi",
+        CreateText(profileCard.transform, "PlayerName", "Jelly Runner",
             new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
             new Vector2(110, 18), new Vector2(230, 34), 26, Color.white, TextAlignmentOptions.Left);
 
-        CreateText(profileCard.transform, "SubText", "18 tuổi • 🇻🇳",
+        CreateText(profileCard.transform, "SubText", "18 Tuổi",
             new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-            new Vector2(110, -14), new Vector2(230, 28), 20, COL_TEXT_SUB, TextAlignmentOptions.Left);
+            new Vector2(110, -18), new Vector2(230, 30), 20, COL_ACCENT_GOLD, TextAlignmentOptions.Left);
 
         // Coin Display — Góc trái trên
         GameObject coinBadge = CreateRoundedPanel(parent, "CoinBadge",
@@ -185,7 +185,7 @@ public static class SceneUIHierarchyGenerator
         RectTransform cbRt = coinBadge.GetComponent<RectTransform>();
         cbRt.pivot = new Vector2(0f, 1f);
 
-        CreateText(parent, "CoinDisplay", "🪙 0 XU",
+        CreateText(parent, "CoinDisplay", "0 XU",
             new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
             new Vector2(135, -56), new Vector2(200, 48), 28, COL_ACCENT_GOLD, TextAlignmentOptions.Center);
     }
@@ -198,23 +198,27 @@ public static class SceneUIHierarchyGenerator
         CreateRoundedPanel(onb.transform, "Card", COL_BG_CARD,
             new Vector2(0.5f, 0.5f), new Vector2(0, 20), new Vector2(880, 1300));
 
+        // Nút Đóng (✕)
+        CreateStyledButton(onb.transform, "CloseBtn", "✕",
+            new Vector2(390, 620), new Vector2(70, 70), 32, COL_BTN_INACTIVE);
+
         // Title
-        CreateText(onb.transform, "Title", "🎉 HỒ SƠ NGƯỜI CHƠI",
+        CreateText(onb.transform, "Title", "HỒ SƠ NGƯỜI CHƠI",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 575), new Vector2(750, 60), 44, COL_ACCENT_CYAN, TextAlignmentOptions.Center);
 
-        CreateText(onb.transform, "Desc", "Hãy chọn tên, tuổi và avatar đại diện",
+        CreateText(onb.transform, "Desc", "Tùy chỉnh tên, độ tuổi và ảnh đại diện của bạn",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(0, 510), new Vector2(720, 36), 24, COL_TEXT_SUB, TextAlignmentOptions.Center);
+            new Vector2(0, 510), new Vector2(750, 36), 24, COL_TEXT_SUB, TextAlignmentOptions.Center);
 
         CreateSeparator(onb.transform, "Sep1", new Vector2(0, 475), 720);
 
         // ── Name ──
-        CreateText(onb.transform, "NameLabel", "TÊN CỦA BẠN",
+        CreateText(onb.transform, "NameLabel", "TÊN NGƯỜI CHƠI",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 435), new Vector2(720, 36), 28, COL_TEXT_SUB, TextAlignmentOptions.Left);
 
-        CreateInputField(onb.transform, "OnbNameInput", "Jelly Runner", "Nhập tên...",
+        CreateInputField(onb.transform, "OnbNameInput", "Jelly Runner", "Nhập tên của bạn...",
             new Vector2(0, 375), new Vector2(720, 75));
 
         CreateSeparator(onb.transform, "Sep2", new Vector2(0, 325), 720);
@@ -222,13 +226,13 @@ public static class SceneUIHierarchyGenerator
         // ── Age ──
         CreateText(onb.transform, "AgeLabel", "ĐỘ TUỔI",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(-130, 285), new Vector2(400, 36), 28, COL_TEXT_SUB, TextAlignmentOptions.Left);
+            new Vector2(-120, 285), new Vector2(400, 42), 28, COL_TEXT_SUB, TextAlignmentOptions.Left);
 
-        CreateText(onb.transform, "AgeVal", "18 tuổi",
+        CreateText(onb.transform, "AgeVal", "18 Tuổi",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(250, 285), new Vector2(200, 36), 30, COL_ACCENT_GOLD, TextAlignmentOptions.Right);
+            new Vector2(200, 285), new Vector2(300, 45), 32, COL_ACCENT_GOLD, TextAlignmentOptions.Right);
 
-        CreateSlider(onb.transform, "OnbAgeSlider", new Vector2(0, 225), new Vector2(720, 45), 0.2f);
+        CreateSlider(onb.transform, "OnbAgeSlider", new Vector2(0, 225), new Vector2(720, 55), 0.2f);
 
         CreateSeparator(onb.transform, "Sep3", new Vector2(0, 185), 720);
 
@@ -298,7 +302,7 @@ public static class SceneUIHierarchyGenerator
         CreateSeparator(onb.transform, "Sep5", new Vector2(0, -180), 720);
 
         // ── Done Button ──
-        CreateStyledButton(onb.transform, "DoneBtn", "✓  XÁC NHẬN & VÀO MENU",
+        CreateStyledButton(onb.transform, "DoneBtn", "XÁC NHẬN & VÀO MENU",
             new Vector2(0, -280), new Vector2(500, 110), 38, COL_ACCENT_GREEN);
 
         onb.SetActive(false);
@@ -312,14 +316,14 @@ public static class SceneUIHierarchyGenerator
         CreateRoundedPanel(set.transform, "Card", COL_BG_CARD,
             new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(850, 1100));
 
-        CreateText(set.transform, "SettingsTitle", "⚙  CÀI ĐẶT",
+        CreateText(set.transform, "SettingsTitle", "CÀI ĐẶT",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 440), new Vector2(500, 60), 46, Color.white, TextAlignmentOptions.Center);
 
         CreateSeparator(set.transform, "S1", new Vector2(0, 395), 680);
 
         // Volume
-        CreateText(set.transform, "VolLabel", "🔊 ÂM LƯỢNG",
+        CreateText(set.transform, "VolLabel", "ÂM LƯỢNG",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 350), new Vector2(680, 36), 28, COL_TEXT_SUB, TextAlignmentOptions.Left);
         CreateSlider(set.transform, "VolumeSlider", new Vector2(0, 295), new Vector2(680, 45), 1f);
@@ -327,7 +331,7 @@ public static class SceneUIHierarchyGenerator
         CreateSeparator(set.transform, "S2", new Vector2(0, 255), 680);
 
         // Sensitivity
-        CreateText(set.transform, "SensLabel", "👆 ĐỘ NHẠY VUỐT",
+        CreateText(set.transform, "SensLabel", "ĐỘ NHẠY VUỐT",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 210), new Vector2(680, 36), 28, COL_TEXT_SUB, TextAlignmentOptions.Left);
         CreateSlider(set.transform, "SensSlider", new Vector2(0, 155), new Vector2(680, 45), 0.5f);
@@ -335,7 +339,7 @@ public static class SceneUIHierarchyGenerator
         CreateSeparator(set.transform, "S3", new Vector2(0, 115), 680);
 
         // Bloom
-        CreateText(set.transform, "BloomLabel", "✨ ĐỘ PHÁT SÁNG NEON",
+        CreateText(set.transform, "BloomLabel", "ĐỘ PHÁT SÁNG NEON",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 70), new Vector2(680, 36), 28, new Color(0.4f, 0.95f, 1f), TextAlignmentOptions.Left);
         CreateSlider(set.transform, "BloomSlider", new Vector2(0, 15), new Vector2(680, 45), 0.54f);
@@ -343,11 +347,11 @@ public static class SceneUIHierarchyGenerator
         CreateSeparator(set.transform, "S4", new Vector2(0, -25), 680);
 
         // Language Toggle
-        CreateStyledButton(set.transform, "LangToggleBtn", "🌐 ĐỔI NGÔN NGỮ",
+        CreateStyledButton(set.transform, "LangToggleBtn", "ĐỔI NGÔN NGỮ",
             new Vector2(0, -90), new Vector2(420, 85), 28, COL_ACCENT_GREEN);
 
         // Reset Best
-        CreateStyledButton(set.transform, "ResetBestBtn", "🗑  XÓA KỶ LỤC",
+        CreateStyledButton(set.transform, "ResetBestBtn", "XÓA KỶ LỤC",
             new Vector2(0, -200), new Vector2(400, 80), 28, COL_ACCENT_RED);
 
         // Close — Circle-ish button
@@ -365,7 +369,7 @@ public static class SceneUIHierarchyGenerator
         CreateRoundedPanel(lb.transform, "Card", COL_BG_CARD,
             new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(860, 1200));
 
-        CreateText(lb.transform, "LBTitle", "🏆 BẢNG XẾP HẠNG",
+        CreateText(lb.transform, "LBTitle", "BẢNG XẾP HẠNG",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 490), new Vector2(700, 60), 46, COL_ACCENT_GOLD, TextAlignmentOptions.Center);
 
@@ -394,11 +398,11 @@ public static class SceneUIHierarchyGenerator
         CreateRoundedPanel(shop.transform, "Card", COL_BG_CARD,
             new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000, 1550));
 
-        CreateText(shop.transform, "Title", "🛍  CỬA HÀNG",
+        CreateText(shop.transform, "Title", "CỬA HÀNG",
             new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
             new Vector2(0, -80), new Vector2(600, 60), 46, COL_ACCENT_CYAN, TextAlignmentOptions.Center);
 
-        CreateText(shop.transform, "ShopCoins", "🪙 0 XU",
+        CreateText(shop.transform, "ShopCoins", "0 XU",
             new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
             new Vector2(-40, -85), new Vector2(260, 50), 34, COL_ACCENT_GOLD, TextAlignmentOptions.Right);
 
@@ -412,13 +416,13 @@ public static class SceneUIHierarchyGenerator
         tabRt.anchoredPosition = new Vector2(0, -160);
         tabRt.sizeDelta = new Vector2(940, 82);
 
-        CreateStyledButton(tabGroup.transform, "Tab_Player", "👤 NHÂN VẬT",
+        CreateStyledButton(tabGroup.transform, "Tab_Player", "NHÂN VẬT",
             new Vector2(-315, 0), new Vector2(290, 78), 28, new Color(0f, 0.6f, 0.85f));
 
-        CreateStyledButton(tabGroup.transform, "Tab_Wall", "🧱 TƯỜNG",
+        CreateStyledButton(tabGroup.transform, "Tab_Wall", "TƯỜNG",
             new Vector2(0, 0), new Vector2(290, 78), 28, COL_BTN_INACTIVE);
 
-        CreateStyledButton(tabGroup.transform, "Tab_Effect", "✨ KỸ NĂNG",
+        CreateStyledButton(tabGroup.transform, "Tab_Effect", "KỸ NĂNG",
             new Vector2(315, 0), new Vector2(290, 78), 28, COL_BTN_INACTIVE);
 
         // Scroll View
@@ -510,7 +514,7 @@ public static class SceneUIHierarchyGenerator
         // Coin badge
         CreateRoundedPanel(hudPanel.transform, "CoinBadge", new Color(0.08f, 0.10f, 0.18f, 0.9f),
             new Vector2(0f, 1f), new Vector2(30, -125), new Vector2(180, 48));
-        CreateText(hudPanel.transform, "CoinHUDText", "🪙 0",
+        CreateText(hudPanel.transform, "CoinHUDText", "0",
             new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
             new Vector2(120, -149), new Vector2(160, 42), 28, COL_ACCENT_GOLD, TextAlignmentOptions.Center);
 
@@ -556,10 +560,10 @@ public static class SceneUIHierarchyGenerator
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 50), new Vector2(660, 210), 26, new Color(0.82f, 0.88f, 1f), TextAlignmentOptions.Center);
 
-        CreateStyledButton(gameOverPanel.transform, "RestartButton", "🔄  CHƠI LẠI",
+        CreateStyledButton(gameOverPanel.transform, "RestartButton", "CHƠI LẠI",
             new Vector2(0, -160), new Vector2(420, 105), 38, COL_ACCENT_GREEN);
 
-        CreateStyledButton(gameOverPanel.transform, "MenuButton", "🏠  MENU",
+        CreateStyledButton(gameOverPanel.transform, "MenuButton", "MENU",
             new Vector2(0, -280), new Vector2(340, 85), 30, new Color(0.30f, 0.35f, 0.48f));
 
         gameOverPanel.SetActive(false);
@@ -570,29 +574,29 @@ public static class SceneUIHierarchyGenerator
         CreateRoundedPanel(pausePanel.transform, "Card", COL_BG_CARD,
             new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(850, 980));
 
-        CreateText(pausePanel.transform, "PauseTitle", "⏸  TẠM DỪNG",
+        CreateText(pausePanel.transform, "PauseTitle", "TẠM DỪNG",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, 370), new Vector2(550, 70), 52, Color.white, TextAlignmentOptions.Center);
 
         CreateSeparator(pausePanel.transform, "PSep1", new Vector2(0, 325), 650);
 
-        CreateStyledButton(pausePanel.transform, "ResumeButton", "▶  TIẾP TỤC",
+        CreateStyledButton(pausePanel.transform, "ResumeButton", "TIẾP TỤC",
             new Vector2(0, 230), new Vector2(400, 105), 38, COL_ACCENT_CYAN);
 
-        CreateStyledButton(pausePanel.transform, "PauseRestartBtn", "🔄  CHƠI LẠI",
+        CreateStyledButton(pausePanel.transform, "PauseRestartBtn", "CHƠI LẠI",
             new Vector2(0, 110), new Vector2(380, 95), 34, COL_ACCENT_GREEN);
 
         CreateSeparator(pausePanel.transform, "PSep2", new Vector2(0, 45), 650);
 
         // Bloom controls
-        CreateText(pausePanel.transform, "PauseBloomLabel", "✨ Độ phát sáng Neon",
+        CreateText(pausePanel.transform, "PauseBloomLabel", "Độ phát sáng Neon",
             new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
             new Vector2(0, -5), new Vector2(650, 36), 26, new Color(0.4f, 0.95f, 1f), TextAlignmentOptions.Left);
         CreateSlider(pausePanel.transform, "PauseBloomSlider", new Vector2(0, -55), new Vector2(650, 42), 0.54f);
 
         CreateSeparator(pausePanel.transform, "PSep3", new Vector2(0, -100), 650);
 
-        CreateStyledButton(pausePanel.transform, "PauseMenuBtn", "🏠  MENU",
+        CreateStyledButton(pausePanel.transform, "PauseMenuBtn", "MENU",
             new Vector2(0, -170), new Vector2(340, 85), 30, new Color(0.30f, 0.35f, 0.48f));
 
         pausePanel.SetActive(false);

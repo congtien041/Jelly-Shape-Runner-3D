@@ -18,12 +18,23 @@ public class AudioManager : MonoBehaviour
     [Header("--- Nhạc Nền ---")]
     [SerializeField] private AudioClip backgroundMusic;
 
-    [Header("--- Hiệu Ứng Âm Thanh ---")]
+    [Header("--- Hiệu Ứng Âm Thanh Gameplay ---")]
     [SerializeField] private AudioClip shapeShiftSound;
     [SerializeField] private AudioClip passWallSound;
     [SerializeField] private AudioClip coinCollectSound;
     [SerializeField] private AudioClip gameOverSound;
+
+    [Header("--- Hiệu Ứng Âm Thanh Giao Diện (UI) ---")]
     [SerializeField] private AudioClip buttonClickSound;
+    [SerializeField] private AudioClip tabSwitchSound;
+    [SerializeField] private AudioClip toggleSound;
+    [SerializeField] private AudioClip popupOpenSound;
+    [SerializeField] private AudioClip popupCloseSound;
+    [SerializeField] private AudioClip shopBuySound;
+    [SerializeField] private AudioClip shopEquipSound;
+    [SerializeField] private AudioClip shopErrorSound;
+    [SerializeField] private AudioClip highScoreSound;
+    [SerializeField] private AudioClip gameStartSound;
 
     [Header("--- Cài Đặt ---")]
     [Range(0f, 1f)]
@@ -124,6 +135,78 @@ public class AudioManager : MonoBehaviour
         PlaySFX(buttonClickSound);
     }
 
+    public void PlayTabSwitchSound()
+    {
+        PlaySFX(tabSwitchSound ?? buttonClickSound);
+    }
+
+    public void PlayToggleSound()
+    {
+        PlaySFX(toggleSound ?? buttonClickSound);
+    }
+
+    public void PlayPopupOpenSound()
+    {
+        PlaySFX(popupOpenSound ?? buttonClickSound);
+    }
+
+    public void PlayPopupCloseSound()
+    {
+        PlaySFX(popupCloseSound ?? buttonClickSound);
+    }
+
+    public void PlayShopBuySound()
+    {
+        PlaySFX(shopBuySound ?? coinCollectSound);
+    }
+
+    public void PlayShopEquipSound()
+    {
+        PlaySFX(shopEquipSound ?? buttonClickSound);
+    }
+
+    public void PlayShopErrorSound()
+    {
+        PlaySFX(shopErrorSound);
+    }
+
+    public void PlayHighScoreSound()
+    {
+        PlaySFX(highScoreSound ?? passWallSound);
+    }
+
+    public void PlayGameStartSound()
+    {
+        PlaySFX(gameStartSound ?? buttonClickSound);
+    }
+
+    /// <summary>
+    /// Tự động quét và gán âm thanh click cho TOÀN BỘ nút bấm (Button) trong GameObject hoặc Scene,
+    /// đảm bảo không bao giờ bị thiếu âm thanh click ở bất kỳ nút nào!
+    /// </summary>
+    public static void AutoHookAllButtons(GameObject root = null)
+    {
+        UnityEngine.UI.Button[] buttons;
+        if (root != null)
+            buttons = root.GetComponentsInChildren<UnityEngine.UI.Button>(true);
+        else
+            buttons = UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (var btn in buttons)
+        {
+            if (btn == null) continue;
+            // Dùng component đánh dấu để tránh gắn lặp nhiều lần
+            if (btn.GetComponent<UIButtonAudioMarker>() == null)
+            {
+                btn.gameObject.AddComponent<UIButtonAudioMarker>();
+                btn.onClick.AddListener(() =>
+                {
+                    if (Instance != null) Instance.PlayButtonClickSound();
+                });
+            }
+        }
+    }
+
     /// <summary>
     /// Phát một clip SFX bất kỳ.
     /// </summary>
@@ -188,4 +271,11 @@ public class AudioManager : MonoBehaviour
         if (sfxSource != null)
             sfxSource.volume = sfxVolume;
     }
+}
+
+/// <summary>
+/// Component marker đánh dấu Button đã được gắn âm thanh click tự động
+/// </summary>
+public class UIButtonAudioMarker : MonoBehaviour
+{
 }

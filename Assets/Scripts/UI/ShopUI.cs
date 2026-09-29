@@ -160,6 +160,7 @@ public class ShopUI : MonoBehaviour
 
             // ★ Animation Layer Lab: Trượt vào từ dưới
             UIAnimator.SlideInFromBottom(shopPanel);
+            AudioManager.Instance?.PlayPopupOpenSound();
 
             UpdateCoinDisplay();
             RefreshShopTexts();
@@ -173,12 +174,15 @@ public class ShopUI : MonoBehaviour
         {
             // ★ Animation Layer Lab: Trượt xuống và ẩn
             UIAnimator.SlideOutToBottom(shopPanel);
+            AudioManager.Instance?.PlayPopupCloseSound();
         }
     }
 
     private void SwitchTab(ShopManager.ItemType type)
     {
         currentTab = type;
+        AudioManager.Instance?.PlayTabSwitchSound();
+
         Color activeCol = new Color(0.05f, 0.55f, 0.88f);
         Color inactiveCol = new Color(0.12f, 0.15f, 0.24f);
 
@@ -237,6 +241,12 @@ public class ShopUI : MonoBehaviour
             bool isEquipped = (equippedIndex == i);
 
             CreateItemCard(contentContainer, item, index, isEquipped);
+        }
+
+        // Tự động gán âm thanh click chuẩn cho 100% các nút card trong shop
+        if (shopPanel != null)
+        {
+            AudioManager.AutoHookAllButtons(shopPanel);
         }
     }
 
@@ -356,6 +366,7 @@ public class ShopUI : MonoBehaviour
             if (item.isUnlocked)
             {
                 ShopManager.Instance.EquipItem(currentTab, index);
+                AudioManager.Instance?.PlayShopEquipSound();
                 if (UIParticleFXManager.Instance != null)
                     UIParticleFXManager.Instance.PlaySparkle(actionBtn.GetComponent<RectTransform>());
             }
@@ -364,13 +375,14 @@ public class ShopUI : MonoBehaviour
                 bool success = ShopManager.Instance.BuyItem(currentTab, index);
                 if (success)
                 {
+                    AudioManager.Instance?.PlayShopBuySound();
                     if (UIParticleFXManager.Instance != null)
                         UIParticleFXManager.Instance.PlaySpreadCircle(actionBtn.GetComponent<RectTransform>());
                 }
                 else
                 {
                     Debug.LogWarning("[ShopUI] Không đủ vàng để mua vật phẩm này!");
-                    AudioManager.Instance?.PlayObstacleHitSound();
+                    AudioManager.Instance?.PlayShopErrorSound();
                 }
             }
 

@@ -22,8 +22,8 @@ public class LeaderboardManager : MonoBehaviour
 
     private LeaderboardData data;
 
-    // Danh sách icon avatar đại diện
-    private static readonly string[] AvatarIcons = new string[] { "💎", "👑", "🔮", "🔥", "🍀", "⚡" };
+    // Danh sách avatar đại diện (không dùng emoji để tránh lỗi font)
+    private static readonly string[] AvatarIcons = new string[] { "", "", "", "", "", "" };
 
     [Serializable]
     public class LeaderboardEntry
@@ -101,7 +101,7 @@ public class LeaderboardManager : MonoBehaviour
         if (leaderboardText == null) return;
 
         bool isVn = LocalizationManager.Instance == null || LocalizationManager.Instance.CurrentLanguage == LocalizationManager.Language.Vietnamese;
-        string header = isVn ? "🏆 BẢNG XẾP HẠNG TOP 5 🏆\n\n" : "🏆 TOP 5 LEADERBOARD 🏆\n\n";
+        string header = isVn ? "BẢNG XẾP HẠNG TOP 5\n\n" : "TOP 5 LEADERBOARD\n\n";
         string display = header;
 
         for (int i = 0; i < data.entries.Count; i++)
@@ -109,17 +109,14 @@ public class LeaderboardManager : MonoBehaviour
             var entry = data.entries[i];
             string medal = i switch
             {
-                0 => "🥇",
-                1 => "🥈",
-                2 => "🥉",
-                _ => $" {i + 1}."
+                0 => "TOP 1.",
+                1 => "TOP 2.",
+                2 => "TOP 3.",
+                _ => $"TOP {i + 1}."
             };
 
-            int avIdx = Mathf.Clamp(entry.avatarIndex, 0, AvatarIcons.Length - 1);
-            string avIcon = AvatarIcons[avIdx];
             string scoreUnit = isVn ? "điểm" : "pts";
-
-            display += $"{medal} {avIcon} {entry.playerName}  —  <color=#FFDE43><b>{entry.score}</b></color> {scoreUnit}\n\n";
+            display += $"{medal} {entry.playerName}  —  <color=#FFDE43><b>{entry.score}</b></color> {scoreUnit}\n\n";
         }
 
         if (data.entries.Count == 0)
@@ -187,11 +184,11 @@ public class LeaderboardManager : MonoBehaviour
     /// </summary>
     private void InitializeDefaultEntries()
     {
-        data.entries.Add(new LeaderboardEntry("Hoàng Gia", 1500, 1)); // 👑
-        data.entries.Add(new LeaderboardEntry("Kim Cương", 1200, 0)); // 💎
-        data.entries.Add(new LeaderboardEntry("Bão Lửa", 950, 3));   // 🔥
-        data.entries.Add(new LeaderboardEntry("Ngân Hà", 700, 2));   // 🔮
-        data.entries.Add(new LeaderboardEntry("Tia Chớp", 500, 5));  // ⚡
+        data.entries.Add(new LeaderboardEntry("Hoàng Gia", 1500, 1));
+        data.entries.Add(new LeaderboardEntry("Kim Cương", 1200, 0));
+        data.entries.Add(new LeaderboardEntry("Bão Lửa", 950, 3));
+        data.entries.Add(new LeaderboardEntry("Ngân Hà", 700, 2));
+        data.entries.Add(new LeaderboardEntry("Tia Chớp", 500, 5));
     }
 
     private void SaveLeaderboard()

@@ -236,22 +236,22 @@ public static class LayerLabAutoSetup
         // ShopButton — Cam/Vàng
         GameObject shopBtn = InstantiatePrefab(BTN_ORANGE_195, btnGroup.transform, "ShopButton");
         shopBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 95);
-        SetButtonText(shopBtn, "🛒 SHOP", 26f);
+        SetButtonText(shopBtn, "SHOP", 26f);
 
         // LeaderboardButton — Xanh dương
         GameObject lbBtn = InstantiatePrefab(BTN_BLUE_195, btnGroup.transform, "LeaderboardButton");
         lbBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 95);
-        SetButtonText(lbBtn, "🏆 HẠNG", 26f);
+        SetButtonText(lbBtn, "HẠNG", 26f);
 
         // SettingsButton — Tím
         GameObject setBtn = InstantiatePrefab(BTN_PURPLE_195, btnGroup.transform, "SettingsButton");
         setBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 95);
-        SetButtonText(setBtn, "⚙️ CÀI ĐẶT", 26f);
+        SetButtonText(setBtn, "CÀI ĐẶT", 26f);
 
         // QuitButton — Đỏ
         GameObject quitBtn = InstantiatePrefab(BTN_RED_145, btnGroup.transform, "QuitButton");
         quitBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(170, 95);
-        SetButtonText(quitBtn, "🚪 THOÁT", 26f);
+        SetButtonText(quitBtn, "THOÁT", 26f);
 
         // ===== 2. ProfileCard_TopRight =====
         GameObject pCard = new GameObject("ProfileCard_TopRight", typeof(RectTransform), typeof(Button));
@@ -261,28 +261,28 @@ public static class LayerLabAutoSetup
         pcRt.anchorMax = new Vector2(1f, 1f);
         pcRt.pivot = new Vector2(1f, 1f);
         pcRt.anchoredPosition = new Vector2(-25, -30);
-        pcRt.sizeDelta = new Vector2(340, 85);
+        pcRt.sizeDelta = new Vector2(360, 90);
 
-        // Profile Frame visual — Gradient frame nhỏ
-        GameObject frameObj = InstantiatePrefab(PROFILE_FRAME_BLUE, pCard.transform, "FrameVisual");
+        // Profile Frame visual — Dùng khung bo tròn navy chuẩn Layer Lab
+        GameObject frameObj = InstantiatePrefab(BORDER_ROUND03_NAVY, pCard.transform, "FrameVisual");
         RectTransform fRt = frameObj.GetComponent<RectTransform>();
         fRt.anchorMin = Vector2.zero;
         fRt.anchorMax = Vector2.one;
         fRt.sizeDelta = Vector2.zero;
         fRt.anchoredPosition = Vector2.zero;
 
-        // AvatarFrame — Khung viền đẹp
+        // AvatarFrame — Khung viền avatar tròn/bo góc bên trái
         GameObject avFrame = new GameObject("AvatarFrame", typeof(RectTransform), typeof(Image));
         avFrame.transform.SetParent(pCard.transform, false);
         RectTransform avRt = avFrame.GetComponent<RectTransform>();
         avRt.anchorMin = new Vector2(0f, 0.5f);
         avRt.anchorMax = new Vector2(0f, 0.5f);
         avRt.pivot = new Vector2(0f, 0.5f);
-        avRt.anchoredPosition = new Vector2(12, 0);
-        avRt.sizeDelta = new Vector2(64, 64);
-        avFrame.GetComponent<Image>().color = new Color(0.12f, 0.18f, 0.32f);
+        avRt.anchoredPosition = new Vector2(15, 0);
+        avRt.sizeDelta = new Vector2(66, 66);
+        avFrame.GetComponent<Image>().color = new Color(0.12f, 0.22f, 0.42f);
 
-        // AvatarImage con — Hiển thị ẢNH THẬT (Sprite) không bị méo
+        // AvatarImage con — Hiển thị ẢNH THẬT (Sprite) tròn trịa
         GameObject avImgObj = new GameObject("AvatarImage", typeof(RectTransform), typeof(Image));
         avImgObj.transform.SetParent(avFrame.transform, false);
         RectTransform avImgRt = avImgObj.GetComponent<RectTransform>();
@@ -296,15 +296,34 @@ public static class LayerLabAutoSetup
                       ?? AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Layer Lab/GUI Pro-CasualGame/ResourcesData/Sprites/Components/Icon_ItemIcons/128/Icon_Crown.png");
         if (defAvSp != null) avImg.sprite = defAvSp;
 
-        CreateTMPText(pCard.transform, "PlayerName", "Người Chơi", 24f, Color.white, TextAlignmentOptions.Left, new Vector2(210, 30), new Vector2(25, 14));
-        CreateTMPText(pCard.transform, "SubText", "18 tuổi • 🇻🇳", 18f, new Color(0.7f, 0.85f, 1f), TextAlignmentOptions.Left, new Vector2(210, 24), new Vector2(25, -14));
+        // PlayerName — Nằm bên phải avatar, chữ trắng to rõ ràng
+        var pNameTmp = CreateTMPText(pCard.transform, "PlayerName", "Jelly Runner", 24f, Color.white, TextAlignmentOptions.Left, new Vector2(250, 34), Vector2.zero);
+        RectTransform pNameRt = pNameTmp.GetComponent<RectTransform>();
+        pNameRt.anchorMin = new Vector2(0f, 0.5f);
+        pNameRt.anchorMax = new Vector2(0f, 0.5f);
+        pNameRt.pivot = new Vector2(0f, 0.5f);
+        pNameRt.anchoredPosition = new Vector2(94, 16);
+        pNameTmp.fontStyle = FontStyles.Bold;
+        pNameTmp.enableWordWrapping = false;
+        pNameTmp.overflowMode = TextOverflowModes.Ellipsis;
+
+        // SubText (Tuổi) — Nằm dưới tên, chữ vàng kim nổi bật, không bao giờ bị cắt
+        var subTmp = CreateTMPText(pCard.transform, "SubText", "18 Tuổi", 20f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Left, new Vector2(250, 30), Vector2.zero);
+        RectTransform subRt = subTmp.GetComponent<RectTransform>();
+        subRt.anchorMin = new Vector2(0f, 0.5f);
+        subRt.anchorMax = new Vector2(0f, 0.5f);
+        subRt.pivot = new Vector2(0f, 0.5f);
+        subRt.anchoredPosition = new Vector2(94, -18);
+        subTmp.fontStyle = FontStyles.Bold;
+        subTmp.enableWordWrapping = false;
+        subTmp.overflowMode = TextOverflowModes.Overflow;
 
         // CoinDisplay — Góc trên trái, khung coin đẹp
         GameObject coinFrame = InstantiatePrefab(BORDER_ROUND03_NAVY, cTrans, "CoinFrame");
         SetAnchored(coinFrame, new Vector2(0f, 1f), new Vector2(25, -30), new Vector2(230, 65));
         RectTransform cfRt = coinFrame.GetComponent<RectTransform>();
         cfRt.pivot = new Vector2(0f, 1f);
-        CreateTMPText(coinFrame.transform, "CoinDisplay", "🪙 0 XU", 28f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Center, new Vector2(210, 55), Vector2.zero);
+        CreateTMPText(coinFrame.transform, "CoinDisplay", "0 XU", 28f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Center, new Vector2(210, 55), Vector2.zero);
 
         // ===== 3. OnboardingPanel =====
         BuildOnboardingPanel(cTrans);
@@ -389,19 +408,29 @@ public static class LayerLabAutoSetup
         GameObject onbCard = InstantiatePrefab(POPUP01_NAVY, onbPanel.transform, "Card");
         SetAnchored(onbCard, new Vector2(0.5f, 0.5f), new Vector2(0, 20), new Vector2(880, 1300));
 
+        // Nút Đóng (✕) tròn ở góc trên phải Card
+        GameObject closeBtn = InstantiatePrefab(BTN_CIRCLE_DARK_128, onbPanel.transform, "CloseBtn");
+        SetAnchored(closeBtn, new Vector2(0.5f, 0.5f), new Vector2(400, 620), new Vector2(75, 75));
+
         // Title ribbon
         GameObject titleRib = InstantiatePrefab(TITLE_RIBBON_GREEN, onbPanel.transform, "TitleRibbon");
         SetAnchored(titleRib, new Vector2(0.5f, 0.5f), new Vector2(0, 580), new Vector2(650, 130));
 
-        CreateTMPText(onbPanel.transform, "Title", "HỒ SƠ NGƯỜI CHƠI", 44f, Color.white, TextAlignmentOptions.Center, new Vector2(600, 55), new Vector2(0, 575));
-        CreateTMPText(onbPanel.transform, "Desc", "Hãy chọn tên, tuổi và avatar đại diện", 24f, new Color(0.72f, 0.82f, 0.96f), TextAlignmentOptions.Center, new Vector2(720, 36), new Vector2(0, 500));
+        // Ẩn toàn bộ text mặc định trong prefab TitleRibbon để tránh đè chữ
+        TextMeshProUGUI[] ribTexts = titleRib.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (var t in ribTexts) t.gameObject.SetActive(false);
+
+        var titleTmp = CreateTMPText(onbPanel.transform, "Title", "HỒ SƠ NGƯỜI CHƠI", 44f, Color.white, TextAlignmentOptions.Center, new Vector2(600, 55), new Vector2(0, 575));
+        titleTmp.fontStyle = FontStyles.Bold;
+
+        CreateTMPText(onbPanel.transform, "Desc", "Tùy chỉnh tên, độ tuổi và ảnh đại diện của bạn", 24f, new Color(0.72f, 0.82f, 0.96f), TextAlignmentOptions.Center, new Vector2(750, 36), new Vector2(0, 500));
 
         // ── Divider ──
         GameObject div1 = InstantiatePrefab(TITLE_DIVIDER, onbPanel.transform, "Div1");
         SetAnchored(div1, new Vector2(0.5f, 0.5f), new Vector2(0, 465), new Vector2(700, 20));
 
         // Name Section
-        CreateTMPText(onbPanel.transform, "NameLabel", "TÊN CỦA BẠN", 28f, new Color(0.6f, 0.8f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 420));
+        CreateTMPText(onbPanel.transform, "NameLabel", "TÊN NGƯỜI CHƠI", 28f, new Color(0.6f, 0.8f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 420));
         GameObject nameInputObj = InstantiatePrefab(INPUTFIELD_NAVY, onbPanel.transform, "OnbNameInput");
         SetAnchored(nameInputObj, new Vector2(0.5f, 0.5f), new Vector2(0, 365), new Vector2(720, 75));
         var tmpInput = nameInputObj.GetComponent<TMP_InputField>();
@@ -413,11 +442,22 @@ public static class LayerLabAutoSetup
         GameObject div2 = InstantiatePrefab(TITLE_DIVIDER, onbPanel.transform, "Div2");
         SetAnchored(div2, new Vector2(0.5f, 0.5f), new Vector2(0, 310), new Vector2(700, 20));
 
-        // Age Section — Label + Value ngang hàng
-        CreateTMPText(onbPanel.transform, "AgeLabel", "ĐỘ TUỔI", 28f, new Color(0.6f, 0.8f, 1f), TextAlignmentOptions.Left, new Vector2(400, 36), new Vector2(-100, 270));
-        CreateTMPText(onbPanel.transform, "AgeVal", "18 tuổi", 30f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Right, new Vector2(200, 36), new Vector2(270, 270));
+        // Age Section — Label bên trái, Tuổi to rõ rực rỡ bên phải
+        CreateTMPText(onbPanel.transform, "AgeLabel", "ĐỘ TUỔI", 28f, new Color(0.6f, 0.8f, 1f), TextAlignmentOptions.Left, new Vector2(350, 42), new Vector2(-120, 272));
+        var ageValTmp = CreateTMPText(onbPanel.transform, "AgeVal", "18 Tuổi", 32f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Right, new Vector2(320, 45), new Vector2(200, 272));
+        ageValTmp.fontStyle = FontStyles.Bold;
+        ageValTmp.enableWordWrapping = false;
+        ageValTmp.overflowMode = TextOverflowModes.Overflow;
+
         GameObject ageSliderObj = InstantiatePrefab(SLIDER_HANDLE_YELLOW, onbPanel.transform, "OnbAgeSlider");
-        SetAnchored(ageSliderObj, new Vector2(0.5f, 0.5f), new Vector2(0, 210), new Vector2(720, 50));
+        SetAnchored(ageSliderObj, new Vector2(0.5f, 0.5f), new Vector2(0, 210), new Vector2(720, 55));
+        var sliderComp = ageSliderObj.GetComponent<Slider>();
+        if (sliderComp != null)
+        {
+            sliderComp.minValue = 0f;
+            sliderComp.maxValue = 1f;
+            sliderComp.wholeNumbers = false;
+        }
 
         // ── Divider ──
         GameObject div3 = InstantiatePrefab(TITLE_DIVIDER, onbPanel.transform, "Div3");
@@ -512,7 +552,7 @@ public static class LayerLabAutoSetup
         // DoneBtn — Lớn, nổi bật
         GameObject doneBtn = InstantiatePrefab(BTN_GREEN_225, onbPanel.transform, "DoneBtn");
         SetAnchored(doneBtn, new Vector2(0.5f, 0.5f), new Vector2(0, -330), new Vector2(400, 110));
-        SetButtonText(doneBtn, "✓ XÁC NHẬN", 38f);
+        SetButtonText(doneBtn, "HOÀN TẤT", 38f);
 
         onbPanel.SetActive(false);
     }
@@ -536,7 +576,7 @@ public static class LayerLabAutoSetup
         CreateTMPText(setPanel.transform, "SettingsTitle", "CÀI ĐẶT", 42f, Color.white, TextAlignmentOptions.Center, new Vector2(400, 55), new Vector2(0, 468));
 
         // Volume
-        CreateTMPText(setPanel.transform, "VolLabel", "🔊 ÂM LƯỢNG", 28f, new Color(0.7f, 0.9f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 350));
+        CreateTMPText(setPanel.transform, "VolLabel", "ÂM LƯỢNG", 28f, new Color(0.7f, 0.9f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 350));
         GameObject volSlider = InstantiatePrefab(SLIDER_HANDLE_WHITE, setPanel.transform, "VolumeSlider");
         SetAnchored(volSlider, new Vector2(0.5f, 0.5f), new Vector2(0, 295), new Vector2(680, 48));
 
@@ -545,7 +585,7 @@ public static class LayerLabAutoSetup
         SetAnchored(ds1, new Vector2(0.5f, 0.5f), new Vector2(0, 250), new Vector2(680, 20));
 
         // Sensitivity
-        CreateTMPText(setPanel.transform, "SensLabel", "👆 ĐỘ NHẠY VUỐT", 28f, new Color(0.7f, 0.9f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 210));
+        CreateTMPText(setPanel.transform, "SensLabel", "ĐỘ NHẠY VUỐT", 28f, new Color(0.7f, 0.9f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 210));
         GameObject sensSlider = InstantiatePrefab(SLIDER_HANDLE_WHITE, setPanel.transform, "SensSlider");
         SetAnchored(sensSlider, new Vector2(0.5f, 0.5f), new Vector2(0, 155), new Vector2(680, 48));
 
@@ -554,7 +594,7 @@ public static class LayerLabAutoSetup
         SetAnchored(ds2, new Vector2(0.5f, 0.5f), new Vector2(0, 110), new Vector2(680, 20));
 
         // Bloom
-        CreateTMPText(setPanel.transform, "BloomLabel", "✨ ĐỘ PHÁT SÁNG NEON", 28f, new Color(0.5f, 0.95f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 70));
+        CreateTMPText(setPanel.transform, "BloomLabel", "ĐỘ PHÁT SÁNG NEON", 28f, new Color(0.5f, 0.95f, 1f), TextAlignmentOptions.Left, new Vector2(700, 36), new Vector2(0, 70));
         GameObject bloomSlider = InstantiatePrefab(SLIDER_HANDLE_YELLOW, setPanel.transform, "BloomSlider");
         SetAnchored(bloomSlider, new Vector2(0.5f, 0.5f), new Vector2(0, 15), new Vector2(680, 48));
 
@@ -565,12 +605,12 @@ public static class LayerLabAutoSetup
         // Language Toggle
         GameObject langToggleBtn = InstantiatePrefab(BTN_GREEN_175, setPanel.transform, "LangToggleBtn");
         SetAnchored(langToggleBtn, new Vector2(0.5f, 0.5f), new Vector2(0, -100), new Vector2(420, 90));
-        SetButtonText(langToggleBtn, "🌐 ĐỔI NGÔN NGỮ", 28f);
+        SetButtonText(langToggleBtn, "ĐỔI NGÔN NGỮ", 28f);
 
         // Reset Best
         GameObject resetBestBtn = InstantiatePrefab(BTN_RED_175, setPanel.transform, "ResetBestBtn");
         SetAnchored(resetBestBtn, new Vector2(0.5f, 0.5f), new Vector2(0, -220), new Vector2(400, 85));
-        SetButtonText(resetBestBtn, "🗑 XÓA KỶ LỤC", 28f);
+        SetButtonText(resetBestBtn, "XÓA KỶ LỤC", 28f);
 
         // Close — Circle button góc phải trên
         GameObject closeSetBtn = InstantiatePrefab(BTN_CIRCLE_DARK_128, setPanel.transform, "CloseSettingsBtn");
@@ -596,7 +636,7 @@ public static class LayerLabAutoSetup
         GameObject titleFlag = InstantiatePrefab(TITLE_RIBBON_YELLOW, lbPanel.transform, "TitleFlag");
         SetAnchored(titleFlag, new Vector2(0.5f, 0.5f), new Vector2(0, 510), new Vector2(620, 130));
 
-        CreateTMPText(lbPanel.transform, "LBTitle", "🏆 BẢNG XẾP HẠNG", 40f, Color.white, TextAlignmentOptions.Center, new Vector2(580, 50), new Vector2(0, 508));
+        CreateTMPText(lbPanel.transform, "LBTitle", "BẢNG XẾP HẠNG", 40f, Color.white, TextAlignmentOptions.Center, new Vector2(580, 50), new Vector2(0, 508));
 
         // Entries Frame — Khung riêng cho danh sách
         GameObject entriesFrame = InstantiatePrefab(FRAME_ROUND20_TRANSPARENT_NAVY, lbPanel.transform, "EntriesFrame");
@@ -629,7 +669,7 @@ public static class LayerLabAutoSetup
         CreateTMPText(shopPanel.transform, "Title", "CỬA HÀNG", 44f, Color.white, TextAlignmentOptions.Center, new Vector2(520, 50), new Vector2(0, 668));
 
         // Coin display
-        CreateTMPText(shopPanel.transform, "ShopCoins", "🪙 0 XU", 34f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Right, new Vector2(280, 50), new Vector2(310, 670));
+        CreateTMPText(shopPanel.transform, "ShopCoins", "0 XU", 34f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Right, new Vector2(280, 50), new Vector2(310, 670));
 
         // TabGroup — Horizontal Layout
         GameObject tabGroup = new GameObject("TabGroup", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -643,15 +683,15 @@ public static class LayerLabAutoSetup
 
         GameObject tabPlayer = InstantiatePrefab(BTN_BLUE_175, tabGroup.transform, "Tab_Player");
         tabPlayer.GetComponent<RectTransform>().sizeDelta = new Vector2(290, 78);
-        SetButtonText(tabPlayer, "👤 NHÂN VẬT", 28f);
+        SetButtonText(tabPlayer, "NHÂN VẬT", 28f);
 
         GameObject tabWall = InstantiatePrefab(BTN_GRAY_175, tabGroup.transform, "Tab_Wall");
         tabWall.GetComponent<RectTransform>().sizeDelta = new Vector2(290, 78);
-        SetButtonText(tabWall, "🧱 TƯỜNG", 28f);
+        SetButtonText(tabWall, "TƯỜNG", 28f);
 
         GameObject tabEffect = InstantiatePrefab(BTN_GRAY_175, tabGroup.transform, "Tab_Effect");
         tabEffect.GetComponent<RectTransform>().sizeDelta = new Vector2(290, 78);
-        SetButtonText(tabEffect, "✨ KỸ NĂNG", 28f);
+        SetButtonText(tabEffect, "KỸ NĂNG", 28f);
 
         // ScrollView — Khu vực cuộn danh sách vật phẩm (dùng RectMask2D để không bị lỗi stencil/mask)
         GameObject scrollObj = new GameObject("ScrollView", typeof(RectTransform), typeof(ScrollRect));
@@ -694,7 +734,7 @@ public static class LayerLabAutoSetup
         // Close Button — Đỏ phía dưới
         GameObject closeShopBtn = InstantiatePrefab(BTN_RED_175, shopPanel.transform, "CloseBtn");
         SetAnchored(closeShopBtn, new Vector2(0.5f, 0.5f), new Vector2(0, -660), new Vector2(380, 95));
-        SetButtonText(closeShopBtn, "← QUAY LẠI", 32f);
+        SetButtonText(closeShopBtn, "QUAY LẠI", 32f);
 
         shopPanel.SetActive(false);
     }
@@ -703,12 +743,12 @@ public static class LayerLabAutoSetup
     {
         var sampleItems = new (string name, string status, Color statusCol, Color previewCol, string btnText, string btnPrefab)[]
         {
-            ("Neon Cyan", "★ ĐANG TRANG BỊ", new Color(0.25f, 0.95f, 0.55f), new Color(0f, 0.9f, 1f), "ĐANG DÙNG", BTN_GREEN_175),
-            ("Gold Royale", "🪙 150 XU", new Color(1f, 0.85f, 0.2f), new Color(1f, 0.85f, 0.15f), "MUA", BTN_ORANGE_195),
-            ("Galaxy Violet", "🪙 250 XU", new Color(1f, 0.85f, 0.2f), new Color(0.65f, 0.15f, 1f), "MUA", BTN_ORANGE_195),
-            ("Magma Fire", "🪙 350 XU", new Color(1f, 0.85f, 0.2f), new Color(1f, 0.3f, 0.05f), "MUA", BTN_ORANGE_195),
-            ("Emerald Jade", "🪙 500 XU", new Color(1f, 0.85f, 0.2f), new Color(0.05f, 0.95f, 0.45f), "MUA", BTN_ORANGE_195),
-            ("Void Shadow", "🪙 750 XU", new Color(1f, 0.85f, 0.2f), new Color(0.2f, 0.15f, 0.35f), "MUA", BTN_ORANGE_195)
+            ("Neon Cyan", "ĐANG TRANG BỊ", new Color(0.25f, 0.95f, 0.55f), new Color(0f, 0.9f, 1f), "ĐANG DÙNG", BTN_GREEN_175),
+            ("Gold Royale", "150 XU", new Color(1f, 0.85f, 0.2f), new Color(1f, 0.85f, 0.15f), "MUA", BTN_ORANGE_195),
+            ("Galaxy Violet", "250 XU", new Color(1f, 0.85f, 0.2f), new Color(0.65f, 0.15f, 1f), "MUA", BTN_ORANGE_195),
+            ("Magma Fire", "350 XU", new Color(1f, 0.85f, 0.2f), new Color(1f, 0.3f, 0.05f), "MUA", BTN_ORANGE_195),
+            ("Emerald Jade", "500 XU", new Color(1f, 0.85f, 0.2f), new Color(0.05f, 0.95f, 0.45f), "MUA", BTN_ORANGE_195),
+            ("Void Shadow", "750 XU", new Color(1f, 0.85f, 0.2f), new Color(0.2f, 0.15f, 0.35f), "MUA", BTN_ORANGE_195)
         };
 
         for (int i = 0; i < sampleItems.Length; i++)
@@ -856,7 +896,7 @@ public static class LayerLabAutoSetup
         SetAnchored(coinBadge, new Vector2(0f, 1f), new Vector2(35, -35), new Vector2(190, 55));
         RectTransform cbRt = coinBadge.GetComponent<RectTransform>();
         cbRt.pivot = new Vector2(0f, 1f);
-        TextMeshProUGUI coinTmp = CreateTMPText(coinBadge.transform, "CoinHUDText", "🪙 0", 28f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Center, new Vector2(170, 45), Vector2.zero);
+        TextMeshProUGUI coinTmp = CreateTMPText(coinBadge.transform, "CoinHUDText", "0", 28f, new Color(1f, 0.88f, 0.25f), TextAlignmentOptions.Center, new Vector2(170, 45), Vector2.zero);
 
         // DistanceText — Phía dưới thanh TopBar nhẹ nhàng
         TextMeshProUGUI distTmp = CreateTMPText(hudPanel.transform, "DistanceText", "0m", 28f, new Color(0.6f, 0.92f, 1f), TextAlignmentOptions.Center, new Vector2(250, 40), new Vector2(0, -135));
@@ -921,12 +961,12 @@ public static class LayerLabAutoSetup
         // RestartButton
         GameObject restartBtn = InstantiatePrefab(BTN_GREEN_225, goBtns.transform, "RestartButton");
         restartBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(400, 110);
-        SetButtonText(restartBtn, "🔄 CHƠI LẠI", 38f);
+        SetButtonText(restartBtn, "CHƠI LẠI", 38f);
 
         // MenuButton
         GameObject menuBtn = InstantiatePrefab(BTN_GRAY_195, goBtns.transform, "MenuButton");
         menuBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(340, 90);
-        SetButtonText(menuBtn, "🏠 MENU", 32f);
+        SetButtonText(menuBtn, "MENU", 32f);
 
         // Particle FX
         GameObject partFx = InstantiatePrefab(FX_SPREAD_STAR, goPanel.transform, "ParticleFX");
@@ -963,18 +1003,18 @@ public static class LayerLabAutoSetup
         // ResumeButton
         GameObject resumeBtn = InstantiatePrefab(BTN_SKY_225, pBtns.transform, "ResumeButton");
         resumeBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(400, 110);
-        SetButtonText(resumeBtn, "▶ TIẾP TỤC", 38f);
+        SetButtonText(resumeBtn, "TIẾP TỤC", 38f);
 
         // PauseRestartBtn
         GameObject pRstBtn = InstantiatePrefab(BTN_GREEN_195, pBtns.transform, "PauseRestartBtn");
         pRstBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(360, 95);
-        SetButtonText(pRstBtn, "🔄 CHƠI LẠI", 34f);
+        SetButtonText(pRstBtn, "CHƠI LẠI", 34f);
 
         // ── Bloom slider ──
         GameObject bloomDiv = InstantiatePrefab(TITLE_DIVIDER, pausePanel.transform, "BloomDiv");
         SetAnchored(bloomDiv, new Vector2(0.5f, 0.5f), new Vector2(0, -15), new Vector2(650, 20));
 
-        TextMeshProUGUI pauseBloomLabel = CreateTMPText(pausePanel.transform, "PauseBloomLabel", "✨ Độ phát sáng Neon", 26f, new Color(0.5f, 0.95f, 1f), TextAlignmentOptions.Left, new Vector2(650, 36), new Vector2(0, -55));
+        TextMeshProUGUI pauseBloomLabel = CreateTMPText(pausePanel.transform, "PauseBloomLabel", "Độ phát sáng Neon", 26f, new Color(0.5f, 0.95f, 1f), TextAlignmentOptions.Left, new Vector2(650, 36), new Vector2(0, -55));
         GameObject pBloomSlider = InstantiatePrefab(SLIDER_HANDLE_YELLOW, pausePanel.transform, "PauseBloomSlider");
         SetAnchored(pBloomSlider, new Vector2(0.5f, 0.5f), new Vector2(0, -110), new Vector2(650, 48));
 
@@ -985,7 +1025,7 @@ public static class LayerLabAutoSetup
         // PauseMenuBtn
         GameObject pMenuBtn = InstantiatePrefab(BTN_GRAY_195, pausePanel.transform, "PauseMenuBtn");
         SetAnchored(pMenuBtn, new Vector2(0.5f, 0.5f), new Vector2(0, -230), new Vector2(340, 90));
-        SetButtonText(pMenuBtn, "🏠 MENU", 32f);
+        SetButtonText(pMenuBtn, "MENU", 32f);
 
         pausePanel.SetActive(false);
 

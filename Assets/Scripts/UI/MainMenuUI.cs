@@ -188,6 +188,13 @@ public class MainMenuUI : MonoBehaviour
         // Tìm UI đã được thiết kế sẵn trên Scene (Layer Lab Prefab)
         FindUIReferences();
 
+        // Tự động gán âm thanh click nảy cho 100% các nút trên MainMenu (Profile, Play, Shop, Settings, Leaderboard, Avatar items, Close...)
+        GameObject canvasObj = GameObject.Find("MenuCanvas");
+        if (canvasObj != null)
+        {
+            AudioManager.AutoHookAllButtons(canvasObj);
+        }
+
         // Lắng nghe sự kiện đổi ngôn ngữ để dịch lại toàn bộ UI tức thì
         LocalizationManager.OnLanguageChanged += RefreshAllLocalizedTexts;
 
@@ -302,6 +309,58 @@ public class MainMenuUI : MonoBehaviour
                 quitBtn.onClick.RemoveAllListeners();
                 quitBtn.onClick.AddListener(() => { AudioManager.Instance?.PlayButtonClickSound(); QuitGame(); });
             }
+
+            // ===== NHÂN VẬT 3D CLONE PREVIEW TẠI MENU =====
+            Transform previewTrans = mPanel.Find("CharacterPreviewArea");
+            RectTransform pRt = null;
+            if (previewTrans != null)
+            {
+                pRt = previewTrans as RectTransform;
+                if (pRt == null)
+                {
+                    Destroy(previewTrans.gameObject);
+                    previewTrans = null;
+                }
+            }
+
+            if (previewTrans == null)
+            {
+                GameObject previewObj = new GameObject("CharacterPreviewArea", typeof(RectTransform));
+                previewObj.transform.SetParent(mPanel, false);
+                pRt = previewObj.GetComponent<RectTransform>();
+                pRt.anchorMin = new Vector2(0.5f, 0.5f);
+                pRt.anchorMax = new Vector2(0.5f, 0.5f);
+                pRt.pivot = new Vector2(0.5f, 0.5f);
+                pRt.anchoredPosition = new Vector2(0f, 45f);
+                pRt.sizeDelta = new Vector2(560f, 560f);
+
+                RawImage rawImg = previewObj.AddComponent<RawImage>();
+                rawImg.color = Color.white;
+                rawImg.raycastTarget = true;
+
+                previewObj.AddComponent<MenuCharacterPreview>();
+
+                // Gợi ý vuốt xoay 360 độ
+                GameObject hintObj = new GameObject("SwipeHintText", typeof(RectTransform));
+                hintObj.transform.SetParent(previewObj.transform, false);
+                RectTransform hintRt = hintObj.GetComponent<RectTransform>();
+                hintRt.anchorMin = new Vector2(0.5f, 0f);
+                hintRt.anchorMax = new Vector2(0.5f, 0f);
+                hintRt.pivot = new Vector2(0.5f, 0.5f);
+                hintRt.anchoredPosition = new Vector2(0f, 20f);
+                hintRt.sizeDelta = new Vector2(400f, 36f);
+
+                TextMeshProUGUI hintText = hintObj.AddComponent<TextMeshProUGUI>();
+                if (TMP_Settings.defaultFontAsset != null) hintText.font = TMP_Settings.defaultFontAsset;
+                hintText.text = "◄ Vuốt để xoay 360° ►";
+                hintText.fontSize = 20;
+                hintText.color = new Color(0.15f, 0.85f, 1f, 0.65f);
+                hintText.alignment = TextAlignmentOptions.Center;
+                hintText.fontStyle = FontStyles.Bold;
+                hintText.raycastTarget = false;
+
+                previewObj.transform.SetSiblingIndex(2);
+            }
         }
 
         // ===== PROFILE CARD TOP-RIGHT =====
@@ -415,14 +474,33 @@ public class MainMenuUI : MonoBehaviour
                 doneBtn.onClick.AddListener(SaveAndCloseOnboarding);
             }
 
-            // Age Slider
+            // Close Button (✕)
+            Button closeOnbBtn = onb.Find("CloseBtn")?.GetComponent<Button>() ?? onb.Find("Card/CloseBtn")?.GetComponent<Button>();
+            if (closeOnbBtn != null)
+            {
+                closeOnbBtn.onClick.RemoveAllListeners();
+                closeOnbBtn.onClick.AddListener(() =>
+                {
+                    AudioManager.Instance?.PlayButtonClickSound();
+                    if (onboardingPanel != null) UIAnimator.PopOutAndDisable(onboardingPanel);
+                });
+            }
+
+            // Age Slider — Chuẩn hóa min 0 max 1, tính tuổi chính xác và cập nhật text tức thì
             if (onbAgeSlider != null)
             {
+                onbAgeSlider.minValue = 0f;
+                onbAgeSlider.maxValue = 1f;
                 onbAgeSlider.onValueChanged.RemoveAllListeners();
                 onbAgeSlider.onValueChanged.AddListener(v =>
                 {
-                    int age = Mathf.RoundToInt(Mathf.Lerp(5f, 70f, v));
-                    if (onbAgeValueText != null) onbAgeValueText.text = LocalizationManager.Get("onb_age_val", age);
+                    int age = Mathf.RoundToInt(Mathf.Lerp(5f, 70f, Mathf.Clamp01(v)));
+                    if (onbAgeValueText != null)
+                    {
+                        onbAgeValueText.text = LocalizationManager.Get("onb_age_val", age);
+                        onbAgeValueText.enableWordWrapping = false;
+                        onbAgeValueText.overflowMode = TextOverflowModes.Overflow;
+                    }
                 });
             }
 
@@ -507,6 +585,7 @@ public class MainMenuUI : MonoBehaviour
                 closeSetBtn.onClick.RemoveAllListeners();
                 closeSetBtn.onClick.AddListener(() =>
                 {
+                    AudioManager.Instance?.PlayPopupCloseSound();
                     UIAnimator.PopOutAndDisable(settingsPanel);
                 });
             }
@@ -528,6 +607,7 @@ public class MainMenuUI : MonoBehaviour
                 closeLB.onClick.RemoveAllListeners();
                 closeLB.onClick.AddListener(() =>
                 {
+                    AudioManager.Instance?.PlayPopupCloseSound();
                     UIAnimator.PopOutAndDisable(leaderboardPanel);
                 });
             }
@@ -542,6 +622,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void PlayGame()
     {
+        AudioManager.Instance?.PlayGameStartSound();
         SceneManager.LoadScene("SampleScene");
     }
 
@@ -560,14 +641,22 @@ public class MainMenuUI : MonoBehaviour
 
     private void UpdateProfileDisplay()
     {
-        string pName = PlayerPrefs.GetString("PlayerName", "Player");
+        string pName = PlayerPrefs.GetString("PlayerName", "Jelly Runner");
         int age = PlayerPrefs.GetInt("PlayerAge", 18);
-        bool isVn = LocalizationManager.Instance != null && LocalizationManager.Instance.CurrentLanguage == LocalizationManager.Language.Vietnamese;
-        string langTag = isVn ? "VN" : "EN";
         int avIdx = Mathf.Clamp(PlayerPrefs.GetInt("PlayerAvatarIndex", 0), 0, AvatarList.Length - 1);
 
-        if (profileNameText != null) profileNameText.text = pName;
-        if (profileSubText != null) profileSubText.text = LocalizationManager.Get("profile_age_format", age, langTag);
+        if (profileNameText != null)
+        {
+            profileNameText.text = pName;
+            profileNameText.enableWordWrapping = false;
+            profileNameText.overflowMode = TextOverflowModes.Ellipsis;
+        }
+        if (profileSubText != null)
+        {
+            profileSubText.text = LocalizationManager.Get("profile_age_format", age);
+            profileSubText.enableWordWrapping = false;
+            profileSubText.overflowMode = TextOverflowModes.Overflow;
+        }
 
         Sprite currentSp = GetAvatarSprite(avIdx);
         if (profileAvatarImage != null)
@@ -647,6 +736,7 @@ public class MainMenuUI : MonoBehaviour
         {
             onboardingPanel.SetActive(true);
             UIAnimator.PopIn(onboardingPanel);
+            AudioManager.Instance?.PlayPopupOpenSound();
 
             selectedAvatarIndex = Mathf.Clamp(PlayerPrefs.GetInt("PlayerAvatarIndex", 0), 0, AvatarList.Length - 1);
             UpdateAvatarSelectionUI();
@@ -657,9 +747,17 @@ public class MainMenuUI : MonoBehaviour
 
             int age = PlayerPrefs.GetInt("PlayerAge", 18);
             if (onbAgeSlider != null)
-                onbAgeSlider.value = (age - 5f) / (70f - 5f);
+            {
+                onbAgeSlider.minValue = 0f;
+                onbAgeSlider.maxValue = 1f;
+                onbAgeSlider.value = Mathf.Clamp01((age - 5f) / (70f - 5f));
+            }
             if (onbAgeValueText != null)
+            {
                 onbAgeValueText.text = LocalizationManager.Get("onb_age_val", age);
+                onbAgeValueText.enableWordWrapping = false;
+                onbAgeValueText.overflowMode = TextOverflowModes.Overflow;
+            }
 
             UpdateLangButtonColors();
         }
@@ -688,6 +786,7 @@ public class MainMenuUI : MonoBehaviour
         if (onboardingPanel != null)
             UIAnimator.PopOutAndDisable(onboardingPanel);
 
+        AudioManager.Instance?.PlayPopupCloseSound();
         UpdateProfileDisplay();
     }
 
@@ -703,10 +802,12 @@ public class MainMenuUI : MonoBehaviour
         {
             settingsPanel.SetActive(true);
             UIAnimator.SlideInFromRight(settingsPanel);
+            AudioManager.Instance?.PlayPopupOpenSound();
         }
         else
         {
             UIAnimator.PopOutAndDisable(settingsPanel);
+            AudioManager.Instance?.PlayPopupCloseSound();
         }
     }
 
@@ -719,6 +820,7 @@ public class MainMenuUI : MonoBehaviour
         {
             leaderboardPanel.SetActive(true);
             UIAnimator.PopIn(leaderboardPanel);
+            AudioManager.Instance?.PlayPopupOpenSound();
 
             if (LeaderboardManager.Instance != null)
                 LeaderboardManager.Instance.DisplayLeaderboard(leaderboardDisplayText);
@@ -726,6 +828,7 @@ public class MainMenuUI : MonoBehaviour
         else
         {
             UIAnimator.PopOutAndDisable(leaderboardPanel);
+            AudioManager.Instance?.PlayPopupCloseSound();
         }
     }
 
@@ -767,7 +870,15 @@ public class MainMenuUI : MonoBehaviour
         if (onbDescText != null) onbDescText.text = LocalizationManager.Get("onb_desc");
         if (onbNameLabelText != null) onbNameLabelText.text = LocalizationManager.Get("onb_name_label");
         if (onbAgeLabelText != null) onbAgeLabelText.text = LocalizationManager.Get("onb_age_label");
-        if (onbAgeValueText != null) onbAgeValueText.text = LocalizationManager.Get("onb_age_val", PlayerPrefs.GetInt("PlayerAge", 18));
+        int currentAge = PlayerPrefs.GetInt("PlayerAge", 18);
+        if (onbAgeSlider != null)
+            currentAge = Mathf.RoundToInt(Mathf.Lerp(5f, 70f, Mathf.Clamp01(onbAgeSlider.value)));
+        if (onbAgeValueText != null)
+        {
+            onbAgeValueText.text = LocalizationManager.Get("onb_age_val", currentAge);
+            onbAgeValueText.enableWordWrapping = false;
+            onbAgeValueText.overflowMode = TextOverflowModes.Overflow;
+        }
         if (onbLangLabelText != null) onbLangLabelText.text = LocalizationManager.Get("onb_lang_label");
         if (onbAvatarLabelText != null) onbAvatarLabelText.text = LocalizationManager.Get("onb_avatar_label");
         if (onbDoneBtnText != null) onbDoneBtnText.text = LocalizationManager.Get("onb_done_btn");
